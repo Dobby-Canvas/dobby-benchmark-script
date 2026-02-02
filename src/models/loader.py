@@ -47,7 +47,7 @@ class ModelLoader:
         return LoadedModel(
             pipe=pipe,
             model_name=f"{base_model_key}_base",
-            model_type="teacher",
+            model_type="base",
             base_model_key=base_model_key,
             load_time=load_time,
         )
@@ -107,7 +107,7 @@ class ModelLoader:
         return LoadedModel(
             pipe=pipe,
             model_name=f"{base_model_key}_dobby_model",
-            model_type="lcm",
+            model_type="dobby",
             base_model_key=base_model_key,
             load_time=load_time,
         )
