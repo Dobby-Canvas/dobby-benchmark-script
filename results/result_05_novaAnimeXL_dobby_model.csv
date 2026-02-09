@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+5,"Girl with animal ears, cat ears, pink hair, animation style",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/05_novaAnimeXL_dobby_model.png,3.341280175955035,0.9335926540079527

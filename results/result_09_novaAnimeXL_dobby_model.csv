@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+9,"Fairy character, little wings, light green hair, forest background, animation",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/09_novaAnimeXL_dobby_model.png,2.778747347998433,0.9060221730032936

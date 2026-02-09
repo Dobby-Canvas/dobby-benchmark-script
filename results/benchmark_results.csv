@@ -1,0 +1,21 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",novaAnimeXL,novaAnimeXL_base,base,results/01_novaAnimeXL_base.png,3.0697154499939643,3.0512966130045243
+2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",novaAnimeXL,novaAnimeXL_base,base,results/02_novaAnimeXL_base.png,2.55647890700493,3.044330157979857
+3,"Cyborg boy in future city background, red eyes, mechanical arm, Any style",novaAnimeXL,novaAnimeXL_base,base,results/03_novaAnimeXL_base.png,2.56678615801502,2.994380606978666
+4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",novaAnimeXL,novaAnimeXL_base,base,results/04_novaAnimeXL_base.png,2.5299529589829035,3.009572630049661
+5,"Girl with animal ears, cat ears, pink hair, animation style",novaAnimeXL,novaAnimeXL_base,base,results/05_novaAnimeXL_base.png,2.8479207619675435,3.0148380610044114
+6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",novaAnimeXL,novaAnimeXL_base,base,results/06_novaAnimeXL_base.png,2.5335994139895774,2.994304419029504
+7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",novaAnimeXL,novaAnimeXL_base,base,results/07_novaAnimeXL_base.png,2.4654799809795804,3.030433636973612
+8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",novaAnimeXL,novaAnimeXL_base,base,results/08_novaAnimeXL_base.png,2.7302595829823986,3.0199983939528465
+9,"Fairy character, little wings, light green hair, forest background, animation",novaAnimeXL,novaAnimeXL_base,base,results/09_novaAnimeXL_base.png,2.5932460189796984,3.035563784011174
+10,"Girl in traditional hanbok, black long hair, fan, animation style",novaAnimeXL,novaAnimeXL_base,base,results/10_novaAnimeXL_base.png,2.533010931976605,2.9964808029471897
+1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/01_novaAnimeXL_dobby_model.png,3.1870636570383795,0.8834576279623434
+2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/02_novaAnimeXL_dobby_model.png,3.0306801769766025,0.9068161810282618
+3,"Cyborg boy in future city background, red eyes, mechanical arm, Any style",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/03_novaAnimeXL_dobby_model.png,2.7008543260162696,1.0147295990027487
+4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/04_novaAnimeXL_dobby_model.png,3.0468676020391285,0.9443116000038572
+5,"Girl with animal ears, cat ears, pink hair, animation style",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/05_novaAnimeXL_dobby_model.png,3.341280175955035,0.9335926540079527
+6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/06_novaAnimeXL_dobby_model.png,2.798927457013633,0.9656150509836152
+7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/07_novaAnimeXL_dobby_model.png,3.019301276013721,0.942983036977239
+8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/08_novaAnimeXL_dobby_model.png,3.041090824001003,0.9086638530134223
+9,"Fairy character, little wings, light green hair, forest background, animation",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/09_novaAnimeXL_dobby_model.png,2.778747347998433,0.9060221730032936
+10,"Girl in traditional hanbok, black long hair, fan, animation style",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/10_novaAnimeXL_dobby_model.png,3.0423994950251654,1.0235694599687122

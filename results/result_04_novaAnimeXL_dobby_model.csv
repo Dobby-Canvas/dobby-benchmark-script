@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/04_novaAnimeXL_dobby_model.png,3.0468676020391285,0.9443116000038572

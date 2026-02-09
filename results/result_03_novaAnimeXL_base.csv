@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+3,"Cyborg boy in future city background, red eyes, mechanical arm, Any style",novaAnimeXL,novaAnimeXL_base,base,results/03_novaAnimeXL_base.png,2.9126028629834764,3.004394747025799

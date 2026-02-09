@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",novaAnimeXL,novaAnimeXL_base,base,results/08_novaAnimeXL_base.png,2.8749486829619855,2.9854637759854086

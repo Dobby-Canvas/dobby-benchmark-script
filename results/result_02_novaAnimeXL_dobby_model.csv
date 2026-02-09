@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/02_novaAnimeXL_dobby_model.png,3.130640465009492,0.947225930984132

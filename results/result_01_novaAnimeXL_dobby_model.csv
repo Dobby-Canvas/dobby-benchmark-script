@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/01_novaAnimeXL_dobby_model.png,3.313164244988002,0.9719455799786374

@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+10,"Girl in traditional hanbok, black long hair, fan, animation style",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/10_novaAnimeXL_dobby_model.png,3.0423994950251654,1.0235694599687122

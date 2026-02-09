@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/06_novaAnimeXL_dobby_model.png,2.798927457013633,0.9656150509836152

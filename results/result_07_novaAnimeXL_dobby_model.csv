@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,model_load_time,inference_time
+7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",novaAnimeXL,novaAnimeXL_dobby_model,dobby,results/07_novaAnimeXL_dobby_model.png,3.019301276013721,0.942983036977239
