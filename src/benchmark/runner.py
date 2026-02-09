@@ -126,6 +126,22 @@ class BenchmarkRunner:
         print(f"결과 저장 완료: {csv_path}")
         return df
 
+    def save_result(self, result: InferenceResult, filename: Optional[str] = None) -> None:
+        """
+        Save a single inference result statistics.
+
+        Args:
+            result: InferenceResult to save
+            filename: Optional filename for the CSV file
+        """
+
+        df = pd.DataFrame([vars(result)])
+        if filename is None:
+            filename = f"result_{result.prompt_idx:02d}_{result.model_name}.csv"
+        csv_path = self.output_dir / filename
+        df.to_csv(csv_path, index=False)
+        print(f"단일 결과 저장 완료: {csv_path}")
+
     def get_results_dataframe(self) -> pd.DataFrame:
         """
         Get results as DataFrame without saving.

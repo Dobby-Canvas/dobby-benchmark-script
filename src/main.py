@@ -24,7 +24,7 @@ def main():
     print("=" * 80)
 
     # Initialize runner and plotter
-    output_dir = "results/validation/all_models"
+    output_dir = "results/"
     runner = BenchmarkRunner(output_dir=output_dir)
     plotter = ResultPlotter(output_dir=output_dir)
 
@@ -55,6 +55,9 @@ def main():
             )
             print(f"    ✓ 생성 완료 (소요 시간: {result.inference_time:.2f}초)")
 
+            runner.save_result(result)
+            print(f"    ✓ 결과 저장 완료")
+
             ModelLoader.unload_model(teacher_model)
 
         print(f"\n✓ Base 모델 벤치마크 완료\n")
@@ -81,6 +84,9 @@ def main():
                 prompt_idx=idx,
             )
             print(f"    ✓ 생성 완료 (소요 시간: {result.inference_time:.2f}초)")
+
+            runner.save_result(result)
+            print(f"    ✓ 결과 저장 완료")
 
             ModelLoader.unload_model(lcm_model)
 
