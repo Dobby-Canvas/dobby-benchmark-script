@@ -56,7 +56,7 @@ PROMPTS: list[str] = [
 
 ## 📊 출력 결과
 
-모든 결과는 `results/validation/all_models/` 디렉토리에 저장됩니다:
+모든 결과는 `results/` 디렉토리에 저장됩니다:
 
 ### 1. CSV 파일
 - **benchmark_results.csv**: 모든 측정 데이터
@@ -72,7 +72,6 @@ PROMPTS: list[str] = [
 ### 2. 시각화 이미지
 - **model_load_time_comparison.png**: 모델별 로딩 시간 비교
 - **inference_time_comparison.png**: 모델별 inference 시간 라인 차트
-- **inference_time_by_prompt.png**: 프롬프트별 inference 시간 막대 그래프
 
 
 ### 3. 생성 이미지
