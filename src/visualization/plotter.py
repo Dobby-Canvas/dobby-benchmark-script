@@ -80,46 +80,6 @@ class ResultPlotter:
         plt.close()
         print(f"모델 로딩 시간 비교 그래프 저장: {output_path}")
 
-    def plot_inference_time_by_prompt(self, df: pd.DataFrame, prompts: list[str]) -> None:
-        """
-        Plot inference time for each prompt across models.
-
-        Args:
-            df: DataFrame with benchmark results
-            prompts: List of prompts used
-        """
-        num_prompts = len(prompts)
-        model_names = sorted(df["model_name"].unique())
-
-        plt.figure(figsize=(18, 2.5 * num_prompts))
-
-        for idx in range(num_prompts):
-            plt.subplot(num_prompts, 1, idx + 1)
-            times = [
-                df[(df["prompt_idx"] == idx + 1) & (df["model_name"] == model)]["inference_time"].values[0]
-                for model in model_names
-            ]
-            bars = plt.bar(range(len(model_names)), times)
-
-            # Color bars by model type
-            for i, model_name in enumerate(model_names):
-                if "teacher" in model_name:
-                    bars[i].set_color("#3498db")
-                else:
-                    bars[i].set_color("#e74c3c")
-
-            plt.xticks(range(len(model_names)), model_names, rotation=45, ha="right")
-            plt.ylabel("Inference Time (s)")
-            plt.title(f"Prompt {idx + 1}: {prompts[idx][:60]}...")
-            plt.grid(axis="y", linestyle="--", alpha=0.5)
-
-        plt.tight_layout()
-
-        output_path = self.output_dir / "inference_time_by_prompt.png"
-        plt.savefig(output_path, dpi=300, bbox_inches="tight")
-        plt.close()
-        print(f"프롬프트별 inference time 그래프 저장: {output_path}")
-
     def create_all_plots(self, df: pd.DataFrame, prompts: list[str]) -> None:
         """
         Create all visualization plots.
@@ -131,5 +91,4 @@ class ResultPlotter:
         print("\n=== 시각화 생성 중 ===")
         self.plot_model_load_time_comparison(df)
         self.plot_inference_time_comparison(df, prompts)
-        self.plot_inference_time_by_prompt(df, prompts)
         print("=== 모든 시각화 완료 ===\n")
