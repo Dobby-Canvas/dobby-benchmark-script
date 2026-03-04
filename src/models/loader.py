@@ -4,7 +4,9 @@ import time
 from dataclasses import dataclass
 
 import torch
-from diffusers import LCMScheduler, StableDiffusionXLPipeline
+from diffusers import (LCMScheduler, StableDiffusionPipeline, StableDiffusionXLPipeline, UNet2DConditionModel)
+
+from .sd15_pipe import MixDQ_SD15_Pipeline_W8A8
 
 
 @dataclass
@@ -16,6 +18,7 @@ class LoadedModel:
     model_type: str  # "teacher" or "lcm"
     base_model_key: str
     load_time: float
+    model_memory_mb: float = 0.0
 
 
 class ModelLoader:
@@ -56,30 +59,45 @@ class ModelLoader:
     def load_lcm_model(
         base_model_key: str,
         lcm_checkpoint_path: str,
+        base_model_path: str,
     ) -> LoadedModel:
         """
         Load LCM fine-tuned model with optimizations for faster inference.
+
+        Dobby 모델은 UNet만 파인튜닝된 체크포인트이므로, 베이스 모델에서
+        전체 파이프라인을 로드한 뒤 UNet만 Dobby 체크포인트로 교체합니다.
 
         Applies several optimization techniques:
         - channels_last memory format for faster convolutions
         - VAE tiling and slicing for memory efficiency
         - QKV projection fusion for attention speedup
-        - torch.compile for JIT compilation
 
         Args:
             base_model_key: Key identifier for the base model
-            lcm_checkpoint_path: Local path to LCM checkpoint
+            lcm_checkpoint_path: HuggingFace model ID or local path to Dobby UNet checkpoint
+            base_model_path: HuggingFace model ID or local path to the base SDXL model
 
         Returns:
             LoadedModel containing the optimized pipeline and metadata
         """
         start_time = time.perf_counter()
 
+        # Dobby 모델은 UNet 전용 체크포인트이므로 베이스 파이프라인을 먼저 로드
         pipe = StableDiffusionXLPipeline.from_pretrained(
-            lcm_checkpoint_path,
+            base_model_path,
             torch_dtype=torch.float16,
             use_safetensors=True,
-        ).to("cuda")
+        )
+
+        # UNet만 Dobby 체크포인트로 교체
+        pipe.unet = UNet2DConditionModel.from_pretrained(
+            lcm_checkpoint_path,
+            subfolder="unet",
+            torch_dtype=torch.float16,
+            use_safetensors=True,
+        )
+
+        pipe = pipe.to("cuda")
 
         # Set LCM scheduler
         pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config)
@@ -122,3 +140,62 @@ class ModelLoader:
         """
         del loaded_model.pipe
         torch.cuda.empty_cache()
+
+    @staticmethod
+    def load_sd15_base_model(base_model_key: str, base_model_path: str) -> LoadedModel:
+        """Load SD1.5 base model."""
+        start_time = time.perf_counter()
+
+        pipe = StableDiffusionPipeline.from_pretrained(
+            base_model_path,
+            torch_dtype=torch.float16,
+        ).to("cuda")
+
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        load_time = time.perf_counter() - start_time
+        model_memory_mb = torch.cuda.memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else 0.0
+
+        return LoadedModel(
+            pipe=pipe,
+            model_name=f"{base_model_key}_base",
+            model_type="base",
+            base_model_key=base_model_key,
+            load_time=load_time,
+            model_memory_mb=model_memory_mb,
+        )
+
+    @staticmethod
+    def load_sd15_quantized_model(base_model_key: str, base_model_path: str, ckpt_path: str) -> LoadedModel:
+        """Load SD1.5 quantized model."""
+        start_time = time.perf_counter()
+
+        pipe = MixDQ_SD15_Pipeline_W8A8.from_pretrained(
+            base_model_path,
+            torch_dtype=torch.float16,
+        ).to("cuda")
+
+        # Quantize UNet (W8A8).
+        # bos=False: BOS optimization requires a separately pre-computed tensor
+        # (bos_pre_computed.pt) that is distinct from ckpt.pth and does not exist
+        # for SD1.5 yet.
+        pipe.quantize_unet(
+            ckpt_path=ckpt_path,
+            w_bit=8,
+            a_bit=8,
+            bos=False,
+        )
+
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        load_time = time.perf_counter() - start_time
+        model_memory_mb = torch.cuda.memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else 0.0
+
+        return LoadedModel(
+            pipe=pipe,
+            model_name=f"{base_model_key}_quantized",
+            model_type="dobby",
+            base_model_key=base_model_key,
+            load_time=load_time,
+            model_memory_mb=model_memory_mb,
+        )

@@ -4,22 +4,27 @@ from typing import Dict
 
 # Base models to benchmark
 BASE_MODELS: Dict[str, str] = {
-    # "base": "stabilityai/stable-diffusion-xl-base-1.0",
-    # "animagine": "cagliostrolab/animagine-xl-4.0",
-    "novaAnimeXL": "frankjoshua/novaAnimeXL_ilV140",
+    "speed_experiment": "frankjoshua/novaAnimeXL_ilV140",
 }
 
 # LCM checkpoint paths for each base model
 LCM_CHECKPOINT_PATHS: Dict[str, str] = {
-    # "base": "data_fp8/sdxl-base-fp8/",
-    # "animagine": "data_fp8/animagine_fp8/",
-    "novaAnimeXL": "dobby-canvas/dobby-model",
+    "speed_experiment": "dobby-canvas/dobby-model",
 }
 
 # General quality prompt
 GENERAL_PROMPT: str = ("master piece, best quality, high resolution, 4k, detailed background, "
                        "intricate details, vibrant colors, sharp focus, cinematic lighting, "
                        "professional composition, award-winning photography")
+
+SD15_MODELS: Dict[str, str] = {
+    "memory_experiment": "runwayml/stable-diffusion-v1-5",
+}
+
+# SD1.5 quantized checkpoint paths
+SD15_QUANT_CKPT_PATHS: Dict[str, str] = {
+    "memory_experiment": "quantization/MixDQ/logs/sd15_quant/ckpt.pth",
+}
 
 # Test prompts
 PROMPTS: list[str] = [

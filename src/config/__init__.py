@@ -1,6 +1,17 @@
 """Configuration module for benchmark script."""
-from .settings import (BASE_MODELS, GENERAL_PROMPT, GUIDANCE_SCALE, LCM_CHECKPOINT_PATHS, LCM_STEPS, PROMPTS, SEED,
-                       TEACHER_STEPS)
+
+from .settings import (
+    BASE_MODELS,
+    GENERAL_PROMPT,
+    GUIDANCE_SCALE,
+    LCM_CHECKPOINT_PATHS,
+    LCM_STEPS,
+    PROMPTS,
+    SD15_MODELS,
+    SD15_QUANT_CKPT_PATHS,
+    SEED,
+    TEACHER_STEPS,
+)
 
 __all__ = [
     "BASE_MODELS",
@@ -11,4 +22,6 @@ __all__ = [
     "LCM_STEPS",
     "GUIDANCE_SCALE",
     "SEED",
+    "SD15_MODELS",
+    "SD15_QUANT_CKPT_PATHS",
 ]

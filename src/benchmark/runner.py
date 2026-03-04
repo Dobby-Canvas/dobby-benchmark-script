@@ -7,10 +7,14 @@ from typing import Optional
 
 import pandas as pd
 import torch
-from PIL import Image
 
 from ..config import GENERAL_PROMPT, GUIDANCE_SCALE, SEED
 from ..models import LoadedModel
+
+SD15_MODEL_TYPES = {"sd15_base", "sd15_quantized"}
+
+SDXL_COLUMNS = ["prompt_idx", "prompt", "base_model_key", "model_name", "model_type", "image_path", "inference_time"]
+SD15_COLUMNS = ["prompt_idx", "prompt", "base_model_key", "model_name", "model_type", "image_path", "model_memory_mb", "peak_memory_mb"]
 
 
 @dataclass
@@ -25,6 +29,14 @@ class InferenceResult:
     image_path: str
     model_load_time: float
     inference_time: float
+    peak_memory_mb: Optional[float] = None
+    model_memory_mb: Optional[float] = None
+
+
+def _select_columns_for_model_type(row: dict, model_type: str) -> dict:
+    """Return only the relevant columns for the given model type."""
+    columns = SD15_COLUMNS if model_type in SD15_MODEL_TYPES else SDXL_COLUMNS
+    return {k: v for k, v in row.items() if k in columns}
 
 
 class BenchmarkRunner:
@@ -51,7 +63,7 @@ class BenchmarkRunner:
         guidance_scale: float = GUIDANCE_SCALE,
     ) -> InferenceResult:
         """
-        Run single inference and measure time.
+        Run single inference and measure time and memory.
 
         Args:
             loaded_model: Loaded model to use for inference
@@ -62,14 +74,14 @@ class BenchmarkRunner:
             guidance_scale: Guidance scale for generation
 
         Returns:
-            InferenceResult with timing and metadata
+            InferenceResult with timing, memory, and metadata
         """
         generator = torch.manual_seed(seed)
         full_prompt = f"{GENERAL_PROMPT}, {prompt}"
 
-        # CUDA 동기화로 정확한 시간 측정
         if torch.cuda.is_available():
             torch.cuda.synchronize()
+            torch.cuda.reset_peak_memory_stats()
 
         start_time = time.perf_counter()
         image = loaded_model.pipe(
@@ -83,17 +95,16 @@ class BenchmarkRunner:
             torch.cuda.synchronize()
         inference_time = time.perf_counter() - start_time
 
-        # 음수 시간 방지 (디버깅용)
+        peak_memory_mb = torch.cuda.max_memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else None
+
         if inference_time < 0:
             print(f"WARNING: Negative inference time detected: {inference_time}")
             inference_time = 0.0
 
-        # Save image
         image_filename = f"{prompt_idx:02d}_{loaded_model.model_name}.png"
         image_path = self.output_dir / image_filename
         image.save(image_path)
 
-        # Clear cache
         torch.cuda.empty_cache()
 
         result = InferenceResult(
@@ -105,6 +116,8 @@ class BenchmarkRunner:
             image_path=str(image_path),
             model_load_time=loaded_model.load_time,
             inference_time=inference_time,
+            peak_memory_mb=peak_memory_mb,
+            model_memory_mb=loaded_model.model_memory_mb or None,
         )
 
         self.results.append(result)
@@ -112,30 +125,34 @@ class BenchmarkRunner:
 
     def save_results(self, filename: str = "benchmark_results.csv") -> pd.DataFrame:
         """
-        Save all results to CSV.
+        Save all results to CSV, keeping only relevant columns per model type.
 
         Args:
             filename: Output CSV filename
 
         Returns:
-            DataFrame containing all results
+            DataFrame containing all results (full, for visualization use)
         """
-        df = pd.DataFrame([vars(r) for r in self.results])
+        full_df = pd.DataFrame([vars(r) for r in self.results])
+
+        filtered_rows = [_select_columns_for_model_type(vars(r), r.model_type) for r in self.results]
+        filtered_df = pd.DataFrame(filtered_rows)
         csv_path = self.output_dir / filename
-        df.to_csv(csv_path, index=False)
+        filtered_df.to_csv(csv_path, index=False)
         print(f"결과 저장 완료: {csv_path}")
-        return df
+
+        return full_df
 
     def save_result(self, result: InferenceResult, filename: Optional[str] = None) -> None:
         """
-        Save a single inference result statistics.
+        Save a single inference result, keeping only columns relevant to its model type.
 
         Args:
             result: InferenceResult to save
             filename: Optional filename for the CSV file
         """
-
-        df = pd.DataFrame([vars(result)])
+        row = _select_columns_for_model_type(vars(result), result.model_type)
+        df = pd.DataFrame([row])
         if filename is None:
             filename = f"result_{result.prompt_idx:02d}_{result.model_name}.csv"
         csv_path = self.output_dir / filename
@@ -144,9 +161,9 @@ class BenchmarkRunner:
 
     def get_results_dataframe(self) -> pd.DataFrame:
         """
-        Get results as DataFrame without saving.
+        Get full results as DataFrame without saving.
 
         Returns:
-            DataFrame containing all results
+            DataFrame containing all results with all columns
         """
         return pd.DataFrame([vars(r) for r in self.results])
