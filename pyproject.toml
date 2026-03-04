@@ -3,27 +3,29 @@ name = "dobby-benchmark-script"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = "==3.10.15"
 dependencies = [
-    "torch",
+    "torch==2.2.1",
     "torchao",
-    "diffusers",
+    "diffusers==0.26.3",
     "pandas",
     "matplotlib",
-    "transformers",
+    "transformers==4.38.2",
     "accelerate",
     "Pillow",
-    "optimum-quanto>=0.2.7",
+    "huggingface-hub==0.25.2",
+    "numpy==1.26.4",
+    "mixdq-extension==0.6",
 ]
 
 
 [tool.uv.sources]
-torch = { index = "pytorch-cu130" }
-torchvision = { index = "pytorch-cu130" }
-torchaudio = { index = "pytorch-cu130" }
-xformers = { index = "pytorch-cu130" }
-torchao = { index = "pytorch-cu130" }
+torch = { index = "pytorch-cu121" }
+torchvision = { index = "pytorch-cu121" }
+torchaudio = { index = "pytorch-cu121" }
+xformers = { index = "pytorch-cu121" }
+torchao = { index = "pytorch-cu121" }
 
 [[tool.uv.index]]
-name = "pytorch-cu130"
-url = "https://download.pytorch.org/whl/cu130"
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
