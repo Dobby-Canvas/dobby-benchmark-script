@@ -50,7 +50,7 @@ class ModelLoader:
         return LoadedModel(
             pipe=pipe,
             model_name=f"{base_model_key}_base",
-            model_type="base",
+            model_type="base_speed",
             base_model_key=base_model_key,
             load_time=load_time,
         )
@@ -125,7 +125,7 @@ class ModelLoader:
         return LoadedModel(
             pipe=pipe,
             model_name=f"{base_model_key}_dobby_model",
-            model_type="dobby",
+            model_type="dobby_speed",
             base_model_key=base_model_key,
             load_time=load_time,
         )
@@ -142,8 +142,8 @@ class ModelLoader:
         torch.cuda.empty_cache()
 
     @staticmethod
-    def load_sd15_base_model(base_model_key: str, base_model_path: str) -> LoadedModel:
-        """Load SD1.5 base model."""
+    def load_base_memory_model(base_model_key: str, base_model_path: str) -> LoadedModel:
+
         start_time = time.perf_counter()
 
         pipe = StableDiffusionPipeline.from_pretrained(
@@ -159,15 +159,15 @@ class ModelLoader:
         return LoadedModel(
             pipe=pipe,
             model_name=f"{base_model_key}_base",
-            model_type="base",
+            model_type="base_memory",
             base_model_key=base_model_key,
             load_time=load_time,
             model_memory_mb=model_memory_mb,
         )
 
     @staticmethod
-    def load_sd15_quantized_model(base_model_key: str, base_model_path: str, ckpt_path: str) -> LoadedModel:
-        """Load SD1.5 quantized model."""
+    def load_dobby_memory_model(base_model_key: str, base_model_path: str, ckpt_path: str) -> LoadedModel:
+
         start_time = time.perf_counter()
 
         pipe = MixDQ_SD15_Pipeline_W8A8.from_pretrained(
@@ -194,7 +194,7 @@ class ModelLoader:
         return LoadedModel(
             pipe=pipe,
             model_name=f"{base_model_key}_quantized",
-            model_type="dobby",
+            model_type="dobby_memory",
             base_model_key=base_model_key,
             load_time=load_time,
             model_memory_mb=model_memory_mb,

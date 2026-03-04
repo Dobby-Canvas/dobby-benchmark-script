@@ -88,14 +88,14 @@ class ResultPlotter:
             df: DataFrame with benchmark results
             prompts: List of prompts used
         """
-        sd15_df = df[df["model_type"].isin(["base", "dobby"])]
+        sd15_df = df[df["model_type"].isin(["base_meomory", "dobby_memory"])]
         if sd15_df.empty:
             return
 
         fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
-        MODEL_COLORS = {"base": "#3498db", "dobby": "#e74c3c"}
-        MODEL_LABELS = {"base": "Base (FP16)", "dobby": "Quantized (W8A8)"}
+        MODEL_COLORS = {"base_memory": "#3498db", "dobby_memory": "#e74c3c"}
+        MODEL_LABELS = {"base_memory": "Base (FP16)", "dobby_memory": "Quantized (W8A8)"}
 
         # Left: Model load memory (static VRAM after loading)
         # Use the mean of peak_memory_mb as proxy for static model memory when model_memory_mb unavailable

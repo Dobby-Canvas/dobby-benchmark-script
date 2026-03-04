@@ -6,7 +6,8 @@ import pandas as pd
 import torch
 
 from .benchmark import BenchmarkRunner
-from .config import (BASE_MODELS, LCM_CHECKPOINT_PATHS, LCM_STEPS, PROMPTS, SD15_MODELS, SD15_QUANT_CKPT_PATHS, TEACHER_STEPS)
+from .config import (BASE_MODELS, LCM_CHECKPOINT_PATHS, LCM_STEPS, PROMPTS, SD15_MODELS, SD15_QUANT_CKPT_PATHS,
+                     TEACHER_STEPS)
 from .models import LoadedModel, ModelLoader
 from .visualization import ResultPlotter
 
@@ -127,7 +128,7 @@ def _run_sd15_benchmarks(runner: BenchmarkRunner) -> None:
         _run_sd15_model_benchmark(
             runner=runner,
             model_display_name=f"{base_model_key}_base",
-            load_fn=lambda: ModelLoader.load_sd15_base_model(
+            load_fn=lambda: ModelLoader.load_base_memory_model(
                 base_model_key=base_model_key,
                 base_model_path=base_model_path,
             ),
@@ -139,7 +140,7 @@ def _run_sd15_benchmarks(runner: BenchmarkRunner) -> None:
         _run_sd15_model_benchmark(
             runner=runner,
             model_display_name=f"{base_model_key}_quantized",
-            load_fn=lambda: ModelLoader.load_sd15_quantized_model(
+            load_fn=lambda: ModelLoader.load_dobby_memory_model(
                 base_model_key=base_model_key,
                 base_model_path=base_model_path,
                 ckpt_path=quant_ckpt,
@@ -153,7 +154,7 @@ def _print_summary(df: pd.DataFrame) -> None:
     """Print benchmark summary statistics split by model family."""
     _print_section_header("벤치마크 요약")
 
-    sd15_mask = df["model_type"].isin(["sd15_base", "sd15_quantized"])
+    sd15_mask = df["model_type"].isin(["base_memory", "dobby_memory"])
     sdxl_df = df[~sd15_mask]
     sd15_df = df[sd15_mask]
 

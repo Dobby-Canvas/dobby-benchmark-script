@@ -11,10 +11,13 @@ import torch
 from ..config import GENERAL_PROMPT, GUIDANCE_SCALE, SEED
 from ..models import LoadedModel
 
-SD15_MODEL_TYPES = {"sd15_base", "sd15_quantized"}
+SD15_MODEL_TYPES = {"base_memory", "dobby_memory"}
 
 SDXL_COLUMNS = ["prompt_idx", "prompt", "base_model_key", "model_name", "model_type", "image_path", "inference_time"]
-SD15_COLUMNS = ["prompt_idx", "prompt", "base_model_key", "model_name", "model_type", "image_path", "model_memory_mb", "peak_memory_mb"]
+SD15_COLUMNS = [
+    "prompt_idx", "prompt", "base_model_key", "model_name", "model_type", "image_path", "model_memory_mb",
+    "peak_memory_mb"
+]
 
 
 @dataclass
