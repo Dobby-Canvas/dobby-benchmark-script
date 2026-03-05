@@ -18,12 +18,12 @@ GENERAL_PROMPT: str = ("master piece, best quality, high resolution, 4k, detaile
                        "professional composition, award-winning photography")
 
 SD15_MODELS: Dict[str, str] = {
-    "memory_experiment": "runwayml/stable-diffusion-v1-5",
+    "memory_experiment": "uf/Counterfeit-V3.0",
 }
 
 # SD1.5 quantized checkpoint paths
 SD15_QUANT_CKPT_PATHS: Dict[str, str] = {
-    "memory_experiment": "quantization/MixDQ/logs/sd15_quant/ckpt.pth",
+    "memory_experiment": "dobby-canvas/dobby-model",
 }
 
 # Test prompts
@@ -43,5 +43,5 @@ PROMPTS: list[str] = [
 # Inference settings
 TEACHER_STEPS: int = 20
 LCM_STEPS: int = 4
-GUIDANCE_SCALE: float = 8.0
-SEED: int = 0
+GUIDANCE_SCALE: float = 7
+SEED: int = 1234567
