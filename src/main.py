@@ -182,14 +182,12 @@ def main():
     _print_section_header("Benchmark - Speed Experiment & Memory Experiment")
 
     runner = BenchmarkRunner(output_dir=OUTPUT_DIR)
-    plotter = ResultPlotter(output_dir=OUTPUT_DIR)
 
     _run_sdxl_benchmarks(runner)
     _run_sd15_benchmarks(runner)
 
     _print_section_header("Result Saving & Visualization Creation")
     df = runner.save_results()
-    plotter.create_all_plots(df, PROMPTS)
 
     _print_summary(df)
 
