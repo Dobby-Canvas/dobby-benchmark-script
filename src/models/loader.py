@@ -4,7 +4,8 @@ import time
 from dataclasses import dataclass
 
 import torch
-from diffusers import (LCMScheduler, StableDiffusionPipeline, StableDiffusionXLPipeline, UNet2DConditionModel)
+from diffusers import (DPMSolverMultistepScheduler, LCMScheduler, StableDiffusionPipeline, StableDiffusionXLPipeline,
+                       UNet2DConditionModel)
 
 from .sd15_pipe import MixDQ_SD15_Pipeline_W8A8
 
@@ -151,6 +152,11 @@ class ModelLoader:
             torch_dtype=torch.float16,
         ).to("cuda")
 
+        pipe.scheduler = DPMSolverMultistepScheduler.from_config(
+            pipe.scheduler.config,
+            use_karras_sigmas=True,
+        )
+
         if torch.cuda.is_available():
             torch.cuda.synchronize()
         load_time = time.perf_counter() - start_time
@@ -166,7 +172,7 @@ class ModelLoader:
         )
 
     @staticmethod
-    def load_dobby_memory_model(base_model_key: str, base_model_path: str, ckpt_path: str) -> LoadedModel:
+    def load_dobby_memory_model(base_model_key: str, base_model_path: str, quant_path: str) -> LoadedModel:
 
         start_time = time.perf_counter()
 
@@ -175,12 +181,24 @@ class ModelLoader:
             torch_dtype=torch.float16,
         ).to("cuda")
 
+        pipe.unet = UNet2DConditionModel.from_pretrained(
+            quant_path,
+            subfolder="quantization/unet",
+            torch_dtype=torch.float16,
+            use_safetensors=True,
+        ).to("cuda")
+
+        pipe.scheduler = DPMSolverMultistepScheduler.from_config(
+            pipe.scheduler.config,
+            use_karras_sigmas=True,
+        )
+
         # Quantize UNet (W8A8).
         # bos=False: BOS optimization requires a separately pre-computed tensor
         # (bos_pre_computed.pt) that is distinct from ckpt.pth and does not exist
         # for SD1.5 yet.
         pipe.quantize_unet(
-            ckpt_path=ckpt_path,
+            ckpt_path=quant_path,
             w_bit=8,
             a_bit=8,
             bos=False,

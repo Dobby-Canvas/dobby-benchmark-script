@@ -39,7 +39,7 @@ class ResultPlotter:
         plt.xticks(range(1, len(prompts) + 1))
         plt.xlabel("Prompt Index")
         plt.ylabel("Inference Time (s)")
-        plt.title("모델별 프롬프트별 Inference Time 비교")
+        plt.title("Each Model's Inference Time Comparison")
         plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
         plt.grid(True)
         plt.tight_layout()
@@ -47,7 +47,7 @@ class ResultPlotter:
         output_path = self.output_dir / "inference_time_comparison.png"
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close()
-        print(f"Inference time 비교 그래프 저장: {output_path}")
+        print(f"Inference time comparison graph saved: {output_path}")
 
     def plot_model_load_time_comparison(self, df: pd.DataFrame) -> None:
         """
@@ -71,14 +71,14 @@ class ResultPlotter:
 
         plt.xticks(range(len(load_times)), load_times.index, rotation=45, ha="right")
         plt.ylabel("Model Load Time (s)")
-        plt.title("모델별 로딩 시간 비교")
+        plt.title("Each Model's Loading Time Comparison")
         plt.grid(axis="y", linestyle="--", alpha=0.5)
         plt.tight_layout()
 
         output_path = self.output_dir / "model_load_time_comparison.png"
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close()
-        print(f"모델 로딩 시간 비교 그래프 저장: {output_path}")
+        print(f"Each Model's Loading Time Comparison graph saved: {output_path}")
 
     def plot_sd15_memory_comparison(self, df: pd.DataFrame, prompts: list[str]) -> None:
         """
@@ -124,7 +124,7 @@ class ResultPlotter:
                 fontweight="bold",
             )
         ax_bar.set_ylabel("Memory (MB)")
-        ax_bar.set_title("모델 로딩 후 VRAM 사용량")
+        ax_bar.set_title("Each Model's Loading Time and VRAM Usage Comparison")
         ax_bar.grid(axis="y", linestyle="--", alpha=0.5)
         ax_bar.set_ylim(0, model_mem_values.max() * 1.2)
 
@@ -144,17 +144,17 @@ class ResultPlotter:
         ax_line.set_xticks(range(1, len(prompts) + 1))
         ax_line.set_xlabel("Prompt Index")
         ax_line.set_ylabel("Peak VRAM (MB)")
-        ax_line.set_title("추론 중 피크 VRAM 사용량 (프롬프트별)")
+        ax_line.set_title("Each Prompt's Peak VRAM Usage During Inference")
         ax_line.legend()
         ax_line.grid(True, linestyle="--", alpha=0.5)
 
-        plt.suptitle("SD1.5 Base vs Quantized: 메모리 사용량 비교", fontsize=14, fontweight="bold")
+        plt.suptitle("SD1.5 Base vs Quantized: Memory Usage Comparison", fontsize=14, fontweight="bold")
         plt.tight_layout()
 
         output_path = self.output_dir / "memory_usage_comparison.png"
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close()
-        print(f"메모리 사용량 비교 그래프 저장: {output_path}")
+        print(f"Memory Usage Comparison graph saved: {output_path}")
 
     def create_all_plots(self, df: pd.DataFrame, prompts: list[str]) -> None:
         """
@@ -166,7 +166,7 @@ class ResultPlotter:
             df: DataFrame with benchmark results
             prompts: List of prompts used
         """
-        print("\n=== 시각화 생성 중 ===")
+        print("\n=== Visualization Creation in Progress ===")
 
         sdxl_df = df[~df["model_type"].isin(["base", "dobby"])]
         if not sdxl_df.empty:
@@ -175,4 +175,4 @@ class ResultPlotter:
 
         self.plot_sd15_memory_comparison(df, prompts)
 
-        print("=== 모든 시각화 완료 ===\n")
+        print("=== All Visualizations Completed ===\n")
