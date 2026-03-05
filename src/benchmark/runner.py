@@ -89,6 +89,8 @@ class BenchmarkRunner:
         start_time = time.perf_counter()
         image = loaded_model.pipe(
             prompt=full_prompt,
+            negative_prompt=
+            "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
             num_inference_steps=num_inference_steps,
             generator=generator,
             guidance_scale=guidance_scale,
