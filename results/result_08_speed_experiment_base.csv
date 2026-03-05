@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,inference_time
+8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",speed_experiment,speed_experiment_base,base_speed,results/08_speed_experiment_base.png,3.2432609039824456

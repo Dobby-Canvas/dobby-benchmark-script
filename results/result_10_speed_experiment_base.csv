@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,inference_time
+10,"Girl in traditional hanbok, black long hair, fan, animation style",speed_experiment,speed_experiment_base,base_speed,results/10_speed_experiment_base.png,3.2623973470181227

@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,inference_time
+1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/01_speed_experiment_dobby_model.png,0.9301284070825204

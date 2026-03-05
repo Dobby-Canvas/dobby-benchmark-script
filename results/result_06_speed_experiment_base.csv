@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,inference_time
+6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",speed_experiment,speed_experiment_base,base_speed,results/06_speed_experiment_base.png,3.25371434900444

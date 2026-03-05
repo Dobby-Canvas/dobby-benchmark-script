@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,peak_memory_mb,model_memory_mb
+2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",memory_experiment,memory_experiment_base,base_memory,results/02_memory_experiment_base.png,3268.4951171875,2657.84375

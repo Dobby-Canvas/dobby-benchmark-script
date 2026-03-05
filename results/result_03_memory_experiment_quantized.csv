@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,peak_memory_mb,model_memory_mb
+3,"Cyborg boy in future city background, red eyes, mechanical arm, Any style",memory_experiment,memory_experiment_quantized,dobby_memory,results/03_memory_experiment_quantized.png,2448.1357421875,1837.484375

@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,peak_memory_mb,model_memory_mb
+6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",memory_experiment,memory_experiment_base,base_memory,results/06_memory_experiment_base.png,3268.4951171875,2657.84375

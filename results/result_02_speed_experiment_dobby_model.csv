@@ -1,0 +1,2 @@
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,inference_time
+2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/02_speed_experiment_dobby_model.png,0.842150473035872
