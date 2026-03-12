@@ -1,2 +1,2 @@
 prompt_idx,prompt,base_model_key,model_name,model_type,image_path,inference_time
-7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/07_speed_experiment_dobby_model.png,0.8858331109804567
+7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/07_speed_experiment_dobby_model.png,0.8885419809957966

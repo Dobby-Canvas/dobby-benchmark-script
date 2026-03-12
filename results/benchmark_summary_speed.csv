@@ -1,0 +1,3 @@
+base_model_key,model_type,inference_time_mean,inference_time_std,inference_time_min,inference_time_max
+speed_experiment,base_speed,3.3709534795052605,0.1267578149267745,3.3016353989951313,3.7187365099962335
+speed_experiment,dobby_speed,0.9152855271997395,0.03242277579507126,0.874297103000572,0.96709817298688

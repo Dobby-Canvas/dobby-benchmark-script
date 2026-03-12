@@ -1,2 +1,2 @@
 prompt_idx,prompt,base_model_key,model_name,model_type,image_path,gpu_peak_memory_mb,ram_peak_mb
-8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",memory_experiment,memory_experiment_base,base_memory,results/08_memory_experiment_base.png,3256.4716796875,7484.1484375
+8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",memory_experiment,memory_experiment_base,base_memory,results/08_memory_experiment_base.png,3262.7841796875,5958.53515625

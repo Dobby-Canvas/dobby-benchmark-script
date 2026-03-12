@@ -1,2 +1,2 @@
 prompt_idx,prompt,base_model_key,model_name,model_type,image_path,gpu_peak_memory_mb,ram_peak_mb
-4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",memory_experiment,memory_experiment_base,base_memory,results/04_memory_experiment_base.png,3256.4716796875,7483.98046875
+4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",memory_experiment,memory_experiment_base,base_memory,results/04_memory_experiment_base.png,3262.7841796875,5975.33203125

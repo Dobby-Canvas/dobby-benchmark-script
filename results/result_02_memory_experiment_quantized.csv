@@ -1,2 +1,2 @@
 prompt_idx,prompt,base_model_key,model_name,model_type,image_path,gpu_peak_memory_mb,ram_peak_mb
-2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",memory_experiment,memory_experiment_quantized,dobby_memory,results/02_memory_experiment_quantized.png,2437.1357421875,7528.08984375
+2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",memory_experiment,memory_experiment_quantized,dobby_memory,results/02_memory_experiment_quantized.png,2439.2685546875,7014.17578125

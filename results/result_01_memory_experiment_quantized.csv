@@ -1,2 +1,2 @@
 prompt_idx,prompt,base_model_key,model_name,model_type,image_path,gpu_peak_memory_mb,ram_peak_mb
-1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",memory_experiment,memory_experiment_quantized,dobby_memory,results/01_memory_experiment_quantized.png,2437.1357421875,7531.5390625
+1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",memory_experiment,memory_experiment_quantized,dobby_memory,results/01_memory_experiment_quantized.png,2439.2685546875,6010.64453125

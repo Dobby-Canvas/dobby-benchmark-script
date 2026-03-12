@@ -1,41 +1,21 @@
-prompt_idx,prompt,base_model_key,model_name,model_type,image_path,inference_time,gpu_peak_memory_mb,ram_peak_mb
-1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",speed_experiment,speed_experiment_base,base_speed,results/01_speed_experiment_base.png,3.7762344960065093,,
-2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",speed_experiment,speed_experiment_base,base_speed,results/02_speed_experiment_base.png,3.3134113950072788,,
-3,"Cyborg boy in future city background, red eyes, mechanical arm, Any style",speed_experiment,speed_experiment_base,base_speed,results/03_speed_experiment_base.png,3.313599866000004,,
-4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",speed_experiment,speed_experiment_base,base_speed,results/04_speed_experiment_base.png,3.3617074369976763,,
-5,"Girl with animal ears, cat ears, pink hair, animation style",speed_experiment,speed_experiment_base,base_speed,results/05_speed_experiment_base.png,3.3241856590029784,,
-6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",speed_experiment,speed_experiment_base,base_speed,results/06_speed_experiment_base.png,3.316176578984596,,
-7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",speed_experiment,speed_experiment_base,base_speed,results/07_speed_experiment_base.png,3.3044586630130652,,
-8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",speed_experiment,speed_experiment_base,base_speed,results/08_speed_experiment_base.png,3.3102088649757206,,
-9,"Fairy character, little wings, light green hair, forest background, animation",speed_experiment,speed_experiment_base,base_speed,results/09_speed_experiment_base.png,3.424361166980816,,
-10,"Girl in traditional hanbok, black long hair, fan, animation style",speed_experiment,speed_experiment_base,base_speed,results/10_speed_experiment_base.png,3.3482062259863596,,
-1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/01_speed_experiment_dobby_model.png,0.9435931420011912,,
-2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/02_speed_experiment_dobby_model.png,0.9121880379971117,,
-3,"Cyborg boy in future city background, red eyes, mechanical arm, Any style",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/03_speed_experiment_dobby_model.png,0.9387237759947311,,
-4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/04_speed_experiment_dobby_model.png,0.8586209369823337,,
-5,"Girl with animal ears, cat ears, pink hair, animation style",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/05_speed_experiment_dobby_model.png,0.8545483830093872,,
-6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/06_speed_experiment_dobby_model.png,0.905923979007639,,
-7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/07_speed_experiment_dobby_model.png,0.8858331109804567,,
-8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/08_speed_experiment_dobby_model.png,0.8655953740235418,,
-9,"Fairy character, little wings, light green hair, forest background, animation",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/09_speed_experiment_dobby_model.png,0.9007358189846855,,
-10,"Girl in traditional hanbok, black long hair, fan, animation style",speed_experiment,speed_experiment_dobby_model,dobby_speed,results/10_speed_experiment_dobby_model.png,0.8962374829861801,,
-1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",memory_experiment,memory_experiment_base,base_memory,results/01_memory_experiment_base.png,,3256.4716796875,7405.890625
-2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",memory_experiment,memory_experiment_base,base_memory,results/02_memory_experiment_base.png,,3256.4716796875,7461.4140625
-3,"Cyborg boy in future city background, red eyes, mechanical arm, Any style",memory_experiment,memory_experiment_base,base_memory,results/03_memory_experiment_base.png,,3256.4716796875,7483.296875
-4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",memory_experiment,memory_experiment_base,base_memory,results/04_memory_experiment_base.png,,3256.4716796875,7483.98046875
-5,"Girl with animal ears, cat ears, pink hair, animation style",memory_experiment,memory_experiment_base,base_memory,results/05_memory_experiment_base.png,,3256.4716796875,7484.1953125
-6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",memory_experiment,memory_experiment_base,base_memory,results/06_memory_experiment_base.png,,3256.4716796875,7484.57421875
-7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",memory_experiment,memory_experiment_base,base_memory,results/07_memory_experiment_base.png,,3256.4716796875,7484.55078125
-8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",memory_experiment,memory_experiment_base,base_memory,results/08_memory_experiment_base.png,,3256.4716796875,7484.1484375
-9,"Fairy character, little wings, light green hair, forest background, animation",memory_experiment,memory_experiment_base,base_memory,results/09_memory_experiment_base.png,,3256.4716796875,7485.16796875
-10,"Girl in traditional hanbok, black long hair, fan, animation style",memory_experiment,memory_experiment_base,base_memory,results/10_memory_experiment_base.png,,3256.4716796875,7485.0625
-1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",memory_experiment,memory_experiment_quantized,dobby_memory,results/01_memory_experiment_quantized.png,,2437.1357421875,7531.5390625
-2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",memory_experiment,memory_experiment_quantized,dobby_memory,results/02_memory_experiment_quantized.png,,2437.1357421875,7528.08984375
-3,"Cyborg boy in future city background, red eyes, mechanical arm, Any style",memory_experiment,memory_experiment_quantized,dobby_memory,results/03_memory_experiment_quantized.png,,2437.1357421875,7528.890625
-4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",memory_experiment,memory_experiment_quantized,dobby_memory,results/04_memory_experiment_quantized.png,,2437.1357421875,7538.69921875
-5,"Girl with animal ears, cat ears, pink hair, animation style",memory_experiment,memory_experiment_quantized,dobby_memory,results/05_memory_experiment_quantized.png,,2437.1357421875,7538.78515625
-6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",memory_experiment,memory_experiment_quantized,dobby_memory,results/06_memory_experiment_quantized.png,,2437.1357421875,7542.78515625
-7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",memory_experiment,memory_experiment_quantized,dobby_memory,results/07_memory_experiment_quantized.png,,2437.1357421875,7542.40625
-8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",memory_experiment,memory_experiment_quantized,dobby_memory,results/08_memory_experiment_quantized.png,,2437.1357421875,7549.15625
-9,"Fairy character, little wings, light green hair, forest background, animation",memory_experiment,memory_experiment_quantized,dobby_memory,results/09_memory_experiment_quantized.png,,2437.1357421875,7548.9765625
-10,"Girl in traditional hanbok, black long hair, fan, animation style",memory_experiment,memory_experiment_quantized,dobby_memory,results/10_memory_experiment_quantized.png,,2437.1357421875,7552.59765625
+prompt_idx,prompt,base_model_key,model_name,model_type,image_path,gpu_peak_memory_mb,ram_peak_mb
+1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",memory_experiment,memory_experiment_base,base_memory,results/01_memory_experiment_base.png,3260.4169921875,4431.49609375
+2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",memory_experiment,memory_experiment_base,base_memory,results/02_memory_experiment_base.png,3262.7841796875,5734.73828125
+3,"Cyborg boy in future city background, red eyes, mechanical arm, Any style",memory_experiment,memory_experiment_base,base_memory,results/03_memory_experiment_base.png,3262.7841796875,5706.88671875
+4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",memory_experiment,memory_experiment_base,base_memory,results/04_memory_experiment_base.png,3262.7841796875,5975.33203125
+5,"Girl with animal ears, cat ears, pink hair, animation style",memory_experiment,memory_experiment_base,base_memory,results/05_memory_experiment_base.png,3262.7841796875,6267.54296875
+6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",memory_experiment,memory_experiment_base,base_memory,results/06_memory_experiment_base.png,3262.7841796875,7258.2890625
+7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",memory_experiment,memory_experiment_base,base_memory,results/07_memory_experiment_base.png,3262.7841796875,6045.015625
+8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",memory_experiment,memory_experiment_base,base_memory,results/08_memory_experiment_base.png,3262.7841796875,5958.53515625
+9,"Fairy character, little wings, light green hair, forest background, animation",memory_experiment,memory_experiment_base,base_memory,results/09_memory_experiment_base.png,3262.7841796875,6023.23046875
+10,"Girl in traditional hanbok, black long hair, fan, animation style",memory_experiment,memory_experiment_base,base_memory,results/10_memory_experiment_base.png,3262.7841796875,6025.7421875
+1,"Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",memory_experiment,memory_experiment_quantized,dobby_memory,results/01_memory_experiment_quantized.png,2439.2685546875,6010.64453125
+2,"Fantasy Knight Animated Character, Silver Armor, Sword, Blonde Hair, Dynamic Pose",memory_experiment,memory_experiment_quantized,dobby_memory,results/02_memory_experiment_quantized.png,2439.2685546875,7014.17578125
+3,"Cyborg boy in future city background, red eyes, mechanical arm, Any style",memory_experiment,memory_experiment_quantized,dobby_memory,results/03_memory_experiment_quantized.png,2439.2685546875,7078.1796875
+4,"Wizard Girl, Long Purple Hair, Magic Wands, Star Patterned Cloak, Animated",memory_experiment,memory_experiment_quantized,dobby_memory,results/04_memory_experiment_quantized.png,2439.2685546875,7084.35546875
+5,"Girl with animal ears, cat ears, pink hair, animation style",memory_experiment,memory_experiment_quantized,dobby_memory,results/05_memory_experiment_quantized.png,2439.2685546875,7016.17578125
+6,"A vibrant boy in a tracksuit, short brown hair, basketball, animation",memory_experiment,memory_experiment_quantized,dobby_memory,results/06_memory_experiment_quantized.png,2439.2685546875,7093.328125
+7,"A beautiful girl in a Gothic dress, black hair, red eyes, animation",memory_experiment,memory_experiment_quantized,dobby_memory,results/07_memory_experiment_quantized.png,2439.2685546875,7086.1015625
+8,"A boy in a pirate costume, an eye patch, short silver hair, sea background, animation",memory_experiment,memory_experiment_quantized,dobby_memory,results/08_memory_experiment_quantized.png,2439.2685546875,7080.9765625
+9,"Fairy character, little wings, light green hair, forest background, animation",memory_experiment,memory_experiment_quantized,dobby_memory,results/09_memory_experiment_quantized.png,2439.2685546875,7034.8046875
+10,"Girl in traditional hanbok, black long hair, fan, animation style",memory_experiment,memory_experiment_quantized,dobby_memory,results/10_memory_experiment_quantized.png,2439.2685546875,7078.43359375

@@ -1,0 +1,3 @@
+base_model_key,model_type,peak_ram_mb_mean,peak_ram_mb_min,peak_ram_mb_max
+memory_experiment,base_memory,7730.76640625,7667.76171875,7769.8828125
+memory_experiment,dobby_memory,7743.6,7710.046875,7778.546875
