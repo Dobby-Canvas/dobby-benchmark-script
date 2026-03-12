@@ -16,6 +16,7 @@ dependencies = [
     "huggingface-hub==0.25.2",
     "numpy==1.26.4",
     "mixdq-extension==0.6",
+    "psutil",
 ]
 
 

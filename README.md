@@ -15,9 +15,9 @@ Dobby 모델의 **속도(Speed)** 및 **메모리(Memory)** 성능을 비교하�
 ### 2. 측정 항목
 
 - ✅ **이미지 생성 시간 (Speed)**: 프롬프트당 이미지 생성 소요 시간
-- ✅ **모델 메모리 (Memory)**: 모델 로드 시 GPU 메모리 사용량
-- ✅ **피크 메모리 (Memory)**: inference 중 최대 GPU 메모리 사용량
-- ✅ **CSV 자동 저장**: 실험별로 적합한 컬럼만 선택해 CSV로 저장
+- ✅ **GPU 메모리 (VRAM)**: inference 중 최대 VRAM
+- ✅ **RAM (시스템 메모리)**: inference 시 프로세스 메모리 사용량 (참고, 실험 중 상승 가능)
+- ✅ **CSV 자동 저장**: GPU/RAM 구분 컬럼으로 저장
 
 ### 3. 자동 시각화
 
@@ -116,8 +116,8 @@ LCM_STEPS: int = 4       # Dobby LCM 모델 (Speed 실험)
 | `model_name` | 모델 이름 |
 | `model_type` | 모델 타입 (`base_memory` / `dobby_memory`) |
 | `image_path` | 생성된 이미지 경로 |
-| `model_memory_mb` | 모델 로드 시 GPU 메모리 (MB) |
-| `peak_memory_mb` | inference 중 최대 GPU 메모리 (MB) |
+| `gpu_peak_memory_mb` | inference 중 최대 GPU 메모리(VRAM) (MB) |
+| `ram_peak_mb` | inference 중 프로세스 RAM 사용량 (MB, 참고, 실험 중 상승 가능) |
 
 
 ### 2. 생성 이미지

@@ -1,11 +1,13 @@
 """Benchmark runner with inference timing."""
 
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 import pandas as pd
+import psutil
 import torch
 
 from ..config import GENERAL_PROMPT, GUIDANCE_SCALE, SEED
@@ -15,9 +17,20 @@ SD15_MODEL_TYPES = {"base_memory", "dobby_memory"}
 
 SDXL_COLUMNS = ["prompt_idx", "prompt", "base_model_key", "model_name", "model_type", "image_path", "inference_time"]
 SD15_COLUMNS = [
-    "prompt_idx", "prompt", "base_model_key", "model_name", "model_type", "image_path", "model_memory_mb",
-    "peak_memory_mb"
+    "prompt_idx",
+    "prompt",
+    "base_model_key",
+    "model_name",
+    "model_type",
+    "image_path",
+    "gpu_peak_memory_mb",
+    "ram_peak_mb",
 ]
+
+SD15_COLUMN_MAP = {
+    "gpu_peak_memory_mb": "peak_memory_mb",
+    "ram_peak_mb": "peak_ram_mb",
+}
 
 
 @dataclass
@@ -33,13 +46,42 @@ class InferenceResult:
     model_load_time: float
     inference_time: float
     peak_memory_mb: Optional[float] = None
-    model_memory_mb: Optional[float] = None
+    peak_ram_mb: Optional[float] = None
+
+
+def _monitor_system_resources(
+    stop_event: threading.Event,
+    cpu_samples: list,
+    ram_samples: list,
+    interval: float = 0.1,
+) -> None:
+    """
+    Thread function to periodically sample CPU and RAM usage during inference.
+
+    Args:
+        stop_event: Event to signal monitoring thread to stop
+        cpu_samples: List to append CPU percent samples to
+        ram_samples: List to append RAM usage (MB) samples to
+        interval: Sampling interval in seconds
+    """
+    process = psutil.Process()
+    psutil.cpu_percent(interval=None)  # 첫 번째 읽기 버리기 (부정확)
+    while not stop_event.is_set():
+        cpu_samples.append(psutil.cpu_percent(interval=None))
+        ram_samples.append(process.memory_info().rss / (1024 * 1024))
+        stop_event.wait(timeout=interval)
 
 
 def _select_columns_for_model_type(row: dict, model_type: str) -> dict:
     """Return only the relevant columns for the given model type."""
-    columns = SD15_COLUMNS if model_type in SD15_MODEL_TYPES else SDXL_COLUMNS
-    return {k: v for k, v in row.items() if k in columns}
+    if model_type in SD15_MODEL_TYPES:
+        result = {}
+        for col in SD15_COLUMNS:
+            src_key = SD15_COLUMN_MAP.get(col, col)
+            if src_key in row:
+                result[col] = row[src_key]
+        return result
+    return {k: v for k, v in row.items() if k in SDXL_COLUMNS}
 
 
 class BenchmarkRunner:
@@ -86,11 +128,20 @@ class BenchmarkRunner:
             torch.cuda.synchronize()
             torch.cuda.reset_peak_memory_stats()
 
+        cpu_samples: list[float] = []
+        ram_samples: list[float] = []
+        stop_event = threading.Event()
+        monitor_thread = threading.Thread(
+            target=_monitor_system_resources,
+            args=(stop_event, cpu_samples, ram_samples),
+            daemon=True,
+        )
+        monitor_thread.start()
+
         start_time = time.perf_counter()
         image = loaded_model.pipe(
             prompt=full_prompt,
-            negative_prompt=
-            "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+            negative_prompt="lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
             num_inference_steps=num_inference_steps,
             generator=generator,
             guidance_scale=guidance_scale,
@@ -100,7 +151,11 @@ class BenchmarkRunner:
             torch.cuda.synchronize()
         inference_time = time.perf_counter() - start_time
 
+        stop_event.set()
+        monitor_thread.join()
+
         peak_memory_mb = torch.cuda.max_memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else None
+        peak_ram_mb = max(ram_samples) if ram_samples else None
 
         if inference_time < 0:
             print(f"WARNING: Negative inference time detected: {inference_time}")
@@ -122,7 +177,7 @@ class BenchmarkRunner:
             model_load_time=loaded_model.load_time,
             inference_time=inference_time,
             peak_memory_mb=peak_memory_mb,
-            model_memory_mb=loaded_model.model_memory_mb or None,
+            peak_ram_mb=peak_ram_mb,
         )
 
         self.results.append(result)

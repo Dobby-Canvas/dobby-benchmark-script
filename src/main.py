@@ -6,8 +6,8 @@ import pandas as pd
 import torch
 
 from .benchmark import BenchmarkRunner
-from .config import (BASE_MODELS, LCM_CHECKPOINT_PATHS, LCM_STEPS, PROMPTS, SD15_MODELS, SD15_QUANT_CKPT_PATHS,
-                     TEACHER_STEPS)
+from .config import (BASE_MODELS, LCM_CHECKPOINT_PATHS, LCM_STEPS, PROMPTS,
+                     SD15_MODELS, SD15_QUANT_CKPT_PATHS, TEACHER_STEPS)
 from .models import LoadedModel, ModelLoader
 from .visualization import ResultPlotter
 
@@ -48,7 +48,9 @@ def _run_sdxl_model_benchmark(
             num_inference_steps=num_steps,
             prompt_idx=idx,
         )
-        print(f"    ✓ Generation completed (inference time: {result.inference_time:.2f}s)")
+        print(
+            f"    ✓ Generation completed (inference time: {result.inference_time:.2f}s "
+        )
 
         runner.save_result(result)
         print("    ✓ Result saved")
@@ -76,7 +78,10 @@ def _run_sd15_model_benchmark(
             num_inference_steps=num_steps,
             prompt_idx=idx,
         )
-        print(f"    ✓ Generation completed (peak memory: {result.peak_memory_mb:.2f}MB)")
+        print(
+            f"    ✓ Generation completed (GPU: {result.peak_memory_mb:.0f}MB "
+            f"| RAM: {result.peak_ram_mb:.0f}MB "
+        )
 
         runner.save_result(result)
         print("    ✓ Result saved")
@@ -165,12 +170,20 @@ def _print_summary(df: pd.DataFrame) -> None:
         print(sdxl_summary.to_string())
 
     if not sd15_df.empty:
-        sd15_summary = sd15_df.groupby(["base_model_key", "model_type"]).agg({
-            "model_memory_mb": ["mean", "min", "max"],
-            "peak_memory_mb": ["mean", "std", "min", "max"],
-        })
-        print("\n[Memory Experiment] Model memory statistics:")
-        print(sd15_summary.to_string())
+        gpu_summary = sd15_df.groupby(["base_model_key", "model_type"]).agg(
+            {
+                "peak_memory_mb": ["mean", "min", "max"],
+            }
+        )
+        print("\n[GPU Memory Experiment] GPU VRAM statistics:")
+        print("  - peak_memory_mb: 추론 중 최대 GPU 메모리 (MB)")
+        print(gpu_summary.to_string())
+
+        ram_summary = sd15_df.groupby(["base_model_key", "model_type"]).agg(
+            {"peak_ram_mb": ["mean", "min", "max"]}
+        )
+        print("\n[RAM (시스템 메모리) Experiment] 프로세스 RAM 사용량 통계:")
+        print(ram_summary.to_string())
 
     counts = df.groupby(["base_model_key", "model_type"]).size()
     print("\nEach model measurement count:")

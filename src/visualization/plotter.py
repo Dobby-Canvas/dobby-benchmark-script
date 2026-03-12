@@ -88,7 +88,7 @@ class ResultPlotter:
             df: DataFrame with benchmark results
             prompts: List of prompts used
         """
-        sd15_df = df[df["model_type"].isin(["base_meomory", "dobby_memory"])]
+        sd15_df = df[df["model_type"].isin(["base_memory", "dobby_memory"])]
         if sd15_df.empty:
             return
 
