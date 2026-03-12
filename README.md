@@ -54,7 +54,11 @@ source .venv/bin/activate
 uv sync
 
 # 벤치마크 실행
-python -m src.main
+python -m src.main              # 전체 실행 (Speed + GPU + RAM)
+python -m src.main -e speed     # Speed 실험만
+python -m src.main -e gpu       # GPU VRAM 실험만
+python -m src.main -e ram       # RAM 실험만
+python -m src.main -h           # 도움말
 ```
 
 
