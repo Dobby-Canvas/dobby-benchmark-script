@@ -26,6 +26,16 @@ SD15_QUANT_CKPT_PATHS: Dict[str, str] = {
     "memory_experiment": "dobby-canvas/dobby-model",
 }
 
+SD15_GGUF_ASSET_REPOS: Dict[str, str] = {
+    "memory_experiment": "dobby-canvas/dobby-model",
+}
+SD15_GGUF_UNET_PATHS: Dict[str, str] = {
+    "memory_experiment": "gguf/sd15-q4_k_m.gguf",
+}
+SD15_GGUF_UNET_CONFIG_DIRS: Dict[str, str] = {
+    "memory_experiment": "gguf",
+}
+
 # Test prompts
 PROMPTS: list[str] = [
     "Cute animated girl, blue hair, big eyes, bright smile, sky blue dress",

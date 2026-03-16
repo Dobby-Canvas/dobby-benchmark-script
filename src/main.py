@@ -9,7 +9,9 @@ import torch
 
 from .benchmark import BenchmarkRunner
 from .config import (BASE_MODELS, LCM_CHECKPOINT_PATHS, LCM_STEPS, PROMPTS,
-                     SD15_MODELS, SD15_QUANT_CKPT_PATHS, TEACHER_STEPS)
+                     SD15_GGUF_ASSET_REPOS, SD15_GGUF_UNET_CONFIG_DIRS,
+                     SD15_GGUF_UNET_PATHS, SD15_MODELS, SD15_QUANT_CKPT_PATHS,
+                     TEACHER_STEPS)
 from .models import LoadedModel, ModelLoader
 from .visualization import ResultPlotter
 
@@ -129,11 +131,13 @@ def _run_sdxl_benchmarks(runner: BenchmarkRunner) -> None:
         print("✓ Dobby Speed Model Benchmark Completed\n")
 
 
-def _run_sd15_benchmarks(runner: BenchmarkRunner, experiment_label: str = "Memory") -> None:
+def _run_sd15_benchmarks(
+    runner: BenchmarkRunner,
+    experiment_label: str = "Memory",
+    use_gguf_for_dobby: bool = False,
+) -> None:
     for base_model_key, base_model_path in SD15_MODELS.items():
         _print_section_header(f"{experiment_label} Experiment Model: {base_model_key} ({base_model_path})")
-
-        quant_path = SD15_QUANT_CKPT_PATHS.get(base_model_key)
 
         print("[1/2] Base Memory Model Benchmark Started...")
         _run_sd15_model_benchmark(
@@ -146,16 +150,37 @@ def _run_sd15_benchmarks(runner: BenchmarkRunner, experiment_label: str = "Memor
             num_steps=TEACHER_STEPS,
         )
         print("✓ Base Memory Model Benchmark Completed\n")
-
         print("[2/2] Dobby Memory Model Benchmark Started...")
-        _run_sd15_model_benchmark(
-            runner=runner,
-            model_display_name=f"{base_model_key}_quantized",
-            load_fn=lambda: ModelLoader.load_dobby_memory_model(
+        if use_gguf_for_dobby:
+            gguf_unet_path = SD15_GGUF_UNET_PATHS.get(base_model_key)
+            unet_config_dir = SD15_GGUF_UNET_CONFIG_DIRS.get(base_model_key)
+            hf_asset_repo_id = SD15_GGUF_ASSET_REPOS.get(base_model_key) or None
+
+            if not gguf_unet_path or not unet_config_dir:
+                raise ValueError(
+                    f"Missing GGUF RAM benchmark paths for '{base_model_key}'. "
+                    "Set SD15_GGUF_UNET_PATHS and SD15_GGUF_UNET_CONFIG_DIRS in settings.py."
+                )
+            load_fn = lambda: ModelLoader.load_dobby_ram_gguf_model(
+                base_model_key=base_model_key,
+                base_model_path=base_model_path,
+                gguf_unet_path=gguf_unet_path,
+                unet_config_dir=unet_config_dir,
+                hf_asset_repo_id=hf_asset_repo_id,
+            )
+        else:
+            quant_path = SD15_QUANT_CKPT_PATHS.get(base_model_key)
+
+            load_fn = lambda: ModelLoader.load_dobby_memory_model(
                 base_model_key=base_model_key,
                 base_model_path=base_model_path,
                 quant_path=quant_path,
-            ),
+            )
+
+        _run_sd15_model_benchmark(
+            runner=runner,
+            model_display_name=f"{base_model_key}_quantized",
+            load_fn=load_fn,
             num_steps=TEACHER_STEPS,
         )
         print("✓ Dobby Memory Model Benchmark Completed\n")
@@ -385,7 +410,11 @@ def main(args: argparse.Namespace | None = None) -> None:
         _run_sdxl_benchmarks(runner)
     if experiment in ("all", "gpu", "ram"):
         label = "GPU VRAM" if experiment == "gpu" else "RAM" if experiment == "ram" else "Memory"
-        _run_sd15_benchmarks(runner, experiment_label=label)
+        _run_sd15_benchmarks(
+            runner,
+            experiment_label=label,
+            use_gguf_for_dobby=(experiment == "ram"),
+        )
 
     _print_section_header("Result Saving & Visualization Creation")
     df = runner.save_results()

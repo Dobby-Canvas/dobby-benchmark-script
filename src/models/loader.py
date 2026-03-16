@@ -1,14 +1,93 @@
 """Model loader with timing measurement."""
 
+import gc
 import time
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, Iterable, Optional
 
+import gguf
 import torch
-from diffusers import (DPMSolverMultistepScheduler, LCMScheduler, StableDiffusionPipeline, StableDiffusionXLPipeline,
+from diffusers import (AutoencoderKL, DDIMScheduler,
+                       DPMSolverMultistepScheduler, LCMScheduler,
+                       StableDiffusionPipeline, StableDiffusionXLPipeline,
                        UNet2DConditionModel)
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
+from transformers import CLIPTextModel, CLIPTokenizer
 
 from .sd15_pipe import MixDQ_SD15_Pipeline_W8A8
 
+UNET_PREFIX_CANDIDATES = ("model.diffusion_model.", "model.", "unet.")
+TORCH_COMPATIBLE_QTYPES = {
+    gguf.GGMLQuantizationType.F16,
+    gguf.GGMLQuantizationType.F32,
+    gguf.GGMLQuantizationType.BF16,
+}
+
+
+def _read_original_shape(reader: gguf.GGUFReader, tensor_name: str) -> Optional[torch.Size]:
+    field_key = f"comfy.gguf.orig_shape.{tensor_name}"
+    field = reader.get_field(field_key)
+    if field is None:
+        return None
+    return torch.Size(tuple(int(field.parts[index][0]) for index in field.data))
+
+
+def _detect_unet_prefix(tensor_names: Iterable[str]) -> Optional[str]:
+    tensor_name_set = set(tensor_names)
+    for prefix in UNET_PREFIX_CANDIDATES:
+        if any(name.startswith(prefix) for name in tensor_name_set):
+            return prefix
+    return None
+
+
+def _dequantize_gguf_tensor(raw_tensor, target_shape: torch.Size, target_dtype: torch.dtype) -> torch.Tensor:
+    tensor_type = raw_tensor.tensor_type
+    if tensor_type in TORCH_COMPATIBLE_QTYPES:
+        source_tensor = torch.from_numpy(raw_tensor.data)
+        return source_tensor.view(*target_shape).to(dtype=target_dtype)
+
+    dequantized = gguf.quants.dequantize(raw_tensor.data, tensor_type)
+    return torch.from_numpy(dequantized).view(*target_shape).to(dtype=target_dtype)
+
+
+def _load_unet_state_dict_from_gguf(gguf_path: Path, target_dtype: torch.dtype) -> Dict[str, torch.Tensor]:
+    reader = gguf.GGUFReader(str(gguf_path))
+    prefix = _detect_unet_prefix(tensor.name for tensor in reader.tensors)
+
+    state_dict: Dict[str, torch.Tensor] = {}
+    for tensor in reader.tensors:
+        original_name = tensor.name
+        if prefix and not original_name.startswith(prefix):
+            continue
+        key_name = original_name[len(prefix):] if prefix else original_name
+
+        original_shape = _read_original_shape(reader, original_name)
+        if original_shape is None:
+            original_shape = torch.Size(tuple(int(value) for value in reversed(tensor.shape)))
+
+        state_dict[key_name] = _dequantize_gguf_tensor(
+            raw_tensor=tensor,
+            target_shape=original_shape,
+            target_dtype=target_dtype,
+        )
+    return state_dict
+
+
+def _resolve_asset_file_path(path_or_filename: str, hf_repo_id: Optional[str]) -> Path:
+    local_path = Path(path_or_filename)
+    if local_path.is_file():
+        return local_path
+
+    if hf_repo_id:
+        downloaded_path = hf_hub_download(repo_id=hf_repo_id, filename=path_or_filename)
+        return Path(downloaded_path)
+
+    raise FileNotFoundError(
+        f"Asset file not found: {path_or_filename}. "
+        "If this path is in Hugging Face repo, set hf_asset_repo_id."
+    )
 
 @dataclass
 class LoadedModel:
@@ -203,6 +282,84 @@ class ModelLoader:
             a_bit=8,
             bos=False,
         )
+
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        load_time = time.perf_counter() - start_time
+        model_memory_mb = torch.cuda.memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else 0.0
+
+        return LoadedModel(
+            pipe=pipe,
+            model_name=f"{base_model_key}_quantized",
+            model_type="dobby_memory",
+            base_model_key=base_model_key,
+            load_time=load_time,
+            model_memory_mb=model_memory_mb,
+        )
+
+    @staticmethod
+    def load_dobby_ram_gguf_model(
+        base_model_key: str,
+        base_model_path: str,
+        gguf_unet_path: str,
+        unet_config_dir: str,
+        hf_asset_repo_id: Optional[str] = None,
+    ) -> LoadedModel:
+        start_time = time.perf_counter()
+
+        dtype = torch.float16
+        local_unet_config_dir = Path(unet_config_dir)
+        if local_unet_config_dir.is_dir():
+            unet_config = UNet2DConditionModel.load_config(str(local_unet_config_dir))
+        elif hf_asset_repo_id:
+            unet_config = UNet2DConditionModel.load_config(hf_asset_repo_id, subfolder=unet_config_dir)
+        else:
+            raise FileNotFoundError(
+                f"UNet config directory not found: {unet_config_dir}. "
+                "If this directory is in Hugging Face repo, set hf_asset_repo_id."
+            )
+
+        unet = UNet2DConditionModel.from_config(unet_config).to(dtype=dtype)
+        resolved_gguf_path = _resolve_asset_file_path(gguf_unet_path, hf_asset_repo_id)
+        unet_state_dict = _load_unet_state_dict_from_gguf(resolved_gguf_path, target_dtype=dtype)
+        unet.load_state_dict(unet_state_dict, strict=False)
+
+        # Release temporary CPU tensors as early as possible for RAM benchmark.
+        del unet_state_dict
+        gc.collect()
+
+        tokenizer = CLIPTokenizer.from_pretrained(base_model_path, subfolder="tokenizer")
+        text_encoder = CLIPTextModel.from_pretrained(
+            base_model_path,
+            subfolder="text_encoder",
+            torch_dtype=dtype,
+        )
+        vae = AutoencoderKL.from_pretrained(
+            base_model_path,
+            subfolder="vae",
+            torch_dtype=dtype,
+        )
+
+        pipe = StableDiffusionPipeline(
+            vae=vae,
+            text_encoder=text_encoder,
+            tokenizer=tokenizer,
+            unet=unet,
+            safety_checker=None,
+            feature_extractor=None,
+            requires_safety_checker=False,
+        ).to("cuda")
+
+
+        pipe.scheduler = DPMSolverMultistepScheduler.from_config(
+            pipe.scheduler.config,
+            use_karras_sigmas=True,
+        )
+
+
+        pipe.enable_attention_slicing()
+        pipe.vae.enable_slicing()
+        pipe.vae.enable_tiling()
 
         if torch.cuda.is_available():
             torch.cuda.synchronize()

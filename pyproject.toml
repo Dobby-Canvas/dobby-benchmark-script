@@ -17,6 +17,7 @@ dependencies = [
     "numpy==1.26.4",
     "mixdq-extension==0.6",
     "psutil",
+    "gguf>=0.18.0",
 ]
 
 
