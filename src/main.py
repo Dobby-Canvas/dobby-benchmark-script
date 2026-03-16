@@ -218,20 +218,24 @@ def _parse_args() -> argparse.Namespace:
 def _save_improvement_report(
     df: pd.DataFrame,
     output_dir: Path,
-    memory_output: str = "both",
+    experiment: str,
 ) -> None:
-    """Calculate Base vs Dobby improvement rates and save to separate txt files per experiment.
+    """Calculate Base vs Dobby improvement rates and save experiment-specific reports.
 
     Args:
         df: Full results DataFrame
         output_dir: Output directory
-        memory_output: "both" | "gpu_only" | "ram_only" - which memory reports to generate
+        experiment: "all" | "speed" | "gpu" | "ram" - selected experiment scope
     """
     sd15_mask = df["model_type"].isin(["base_memory", "dobby_memory"])
     sdxl_df = df[~sd15_mask]
     sd15_df = df[sd15_mask]
 
-    if not sdxl_df.empty:
+    output_speed = experiment in ("all", "speed")
+    output_gpu = experiment in ("all", "gpu")
+    output_ram = experiment in ("all", "ram")
+
+    if output_speed and not sdxl_df.empty:
         speed_lines: list[str] = []
         speed_lines.append("=" * 60)
         speed_lines.append("Speed Experiment - Improvement Report (Base vs Dobby)")
@@ -260,10 +264,7 @@ def _save_improvement_report(
         speed_path.write_text("\n".join(speed_lines), encoding="utf-8")
         print(f"\nSpeed improvement report saved to: {speed_path}")
 
-    if not sd15_df.empty:
-        output_gpu = memory_output in ("both", "gpu_only")
-        output_ram = memory_output in ("both", "ram_only")
-
+    if not sd15_df.empty and (output_gpu or output_ram):
         if output_gpu:
             gpu_lines: list[str] = []
             gpu_lines.append("=" * 60)
@@ -323,14 +324,14 @@ def _save_improvement_report(
 def _print_summary(
     df: pd.DataFrame,
     output_dir: Path,
-    memory_output: str = "both",
+    experiment: str,
 ) -> None:
-    """Print benchmark summary statistics and save to separate CSV files.
+    """Print benchmark summary statistics and save experiment-specific CSV files.
 
     Args:
         df: Full results DataFrame
         output_dir: Output directory
-        memory_output: "both" | "gpu_only" | "ram_only" - which memory outputs to generate
+        experiment: "all" | "speed" | "gpu" | "ram" - selected experiment scope
     """
     _print_section_header("Benchmark Summary")
 
@@ -338,7 +339,11 @@ def _print_summary(
     sdxl_df = df[~sd15_mask]
     sd15_df = df[sd15_mask]
 
-    if not sdxl_df.empty:
+    output_speed = experiment in ("all", "speed")
+    output_gpu = experiment in ("all", "gpu")
+    output_ram = experiment in ("all", "ram")
+
+    if output_speed and not sdxl_df.empty:
         sdxl_summary = sdxl_df.groupby(["base_model_key", "model_type"]).agg({
             "inference_time": ["mean", "std", "min", "max"],
         })
@@ -351,10 +356,7 @@ def _print_summary(
         speed_df.to_csv(speed_path, index=False)
         print(f"  → Saved: {speed_path}")
 
-    if not sd15_df.empty:
-        output_gpu = memory_output in ("both", "gpu_only")
-        output_ram = memory_output in ("both", "ram_only")
-
+    if not sd15_df.empty and (output_gpu or output_ram):
         if output_gpu:
             gpu_summary = sd15_df.groupby(["base_model_key", "model_type"]).agg(
                 {"peak_memory_mb": ["mean", "min", "max"]}
@@ -386,7 +388,34 @@ def _print_summary(
     print("\nEach model measurement count:")
     print(counts.to_string())
 
-    _save_improvement_report(df, output_dir, memory_output)
+    _save_improvement_report(df, output_dir, experiment)
+
+
+def _cleanup_unrequested_outputs(output_dir: Path, experiment: str) -> None:
+    """Remove stale output files so only files for the current experiment remain."""
+    all_output_files = {
+        BENCHMARK_SUMMARY_SPEED_CSV,
+        BENCHMARK_SUMMARY_GPU_CSV,
+        BENCHMARK_SUMMARY_RAM_CSV,
+        BENCHMARK_IMPROVEMENT_REPORT_SPEED_TXT,
+        BENCHMARK_IMPROVEMENT_REPORT_GPU_TXT,
+        BENCHMARK_IMPROVEMENT_REPORT_RAM_TXT,
+    }
+    required_output_files_by_experiment = {
+        "all": all_output_files,
+        "speed": {BENCHMARK_SUMMARY_SPEED_CSV, BENCHMARK_IMPROVEMENT_REPORT_SPEED_TXT},
+        "gpu": {BENCHMARK_SUMMARY_GPU_CSV, BENCHMARK_IMPROVEMENT_REPORT_GPU_TXT},
+        "ram": {BENCHMARK_SUMMARY_RAM_CSV, BENCHMARK_IMPROVEMENT_REPORT_RAM_TXT},
+    }
+
+    required_files = required_output_files_by_experiment[experiment]
+    removable_files = all_output_files - required_files
+
+    for filename in removable_files:
+        stale_file_path = output_dir / filename
+        if stale_file_path.exists():
+            stale_file_path.unlink()
+            print(f"  → Removed stale output: {stale_file_path}")
 
 
 def main(args: argparse.Namespace | None = None) -> None:
@@ -418,15 +447,9 @@ def main(args: argparse.Namespace | None = None) -> None:
 
     _print_section_header("Result Saving & Visualization Creation")
     df = runner.save_results()
-
-    if experiment == "gpu":
-        memory_output = "gpu_only"
-    elif experiment == "ram":
-        memory_output = "ram_only"
-    else:
-        memory_output = "both"
-
-    _print_summary(df, Path(OUTPUT_DIR), memory_output)
+    output_dir_path = Path(OUTPUT_DIR)
+    _cleanup_unrequested_outputs(output_dir_path, experiment)
+    _print_summary(df, output_dir_path, experiment)
 
     print(f"\n{'=' * SECTION_WIDTH}")
     print(f"All results are saved in {OUTPUT_DIR}")
