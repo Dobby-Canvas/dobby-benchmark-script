@@ -45,8 +45,9 @@ pandas, matplotlib, Pillow, numpy, accelerate, huggingface-hub
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.bashrc
 
-uv venv --python 3.10 .venv
+uv venv --python 3.10.15 .venv
 
 source .venv/bin/activate
 
