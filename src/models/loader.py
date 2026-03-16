@@ -339,22 +339,18 @@ class ModelLoader:
             subfolder="vae",
             torch_dtype=dtype,
         )
+        scheduler = DDIMScheduler.from_pretrained(base_model_path, subfolder="scheduler")
 
         pipe = StableDiffusionPipeline(
             vae=vae,
             text_encoder=text_encoder,
             tokenizer=tokenizer,
             unet=unet,
+            scheduler=scheduler,
             safety_checker=None,
             feature_extractor=None,
             requires_safety_checker=False,
         ).to("cuda")
-
-
-        pipe.scheduler = DPMSolverMultistepScheduler.from_config(
-            pipe.scheduler.config,
-            use_karras_sigmas=True,
-        )
 
 
         pipe.enable_attention_slicing()
