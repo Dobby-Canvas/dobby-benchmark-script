@@ -8,12 +8,16 @@ from typing import Dict, Iterable, Optional
 
 import gguf
 import torch
-from diffusers import (AutoencoderKL, DDIMScheduler,
-                       DPMSolverMultistepScheduler, LCMScheduler,
-                       StableDiffusionPipeline, StableDiffusionXLPipeline,
-                       UNet2DConditionModel)
+from diffusers import (
+    AutoencoderKL,
+    DDIMScheduler,
+    DPMSolverMultistepScheduler,
+    LCMScheduler,
+    StableDiffusionPipeline,
+    StableDiffusionXLPipeline,
+    UNet2DConditionModel,
+)
 from huggingface_hub import hf_hub_download
-from safetensors.torch import load_file
 from transformers import CLIPTextModel, CLIPTokenizer
 
 from .sd15_pipe import MixDQ_SD15_Pipeline_W8A8
@@ -45,11 +49,11 @@ def _detect_unet_prefix(tensor_names: Iterable[str]) -> Optional[str]:
 def _dequantize_gguf_tensor(raw_tensor, target_shape: torch.Size, target_dtype: torch.dtype) -> torch.Tensor:
     tensor_type = raw_tensor.tensor_type
     if tensor_type in TORCH_COMPATIBLE_QTYPES:
-        source_tensor = torch.from_numpy(raw_tensor.data)
+        source_tensor = torch.from_numpy(raw_tensor.data.copy())
         return source_tensor.view(*target_shape).to(dtype=target_dtype)
 
     dequantized = gguf.quants.dequantize(raw_tensor.data, tensor_type)
-    return torch.from_numpy(dequantized).view(*target_shape).to(dtype=target_dtype)
+    return torch.from_numpy(dequantized.copy()).view(*target_shape).to(dtype=target_dtype)
 
 
 def _load_unet_state_dict_from_gguf(gguf_path: Path, target_dtype: torch.dtype) -> Dict[str, torch.Tensor]:
@@ -61,7 +65,7 @@ def _load_unet_state_dict_from_gguf(gguf_path: Path, target_dtype: torch.dtype) 
         original_name = tensor.name
         if prefix and not original_name.startswith(prefix):
             continue
-        key_name = original_name[len(prefix):] if prefix else original_name
+        key_name = original_name[len(prefix) :] if prefix else original_name
 
         original_shape = _read_original_shape(reader, original_name)
         if original_shape is None:
@@ -85,9 +89,9 @@ def _resolve_asset_file_path(path_or_filename: str, hf_repo_id: Optional[str]) -
         return Path(downloaded_path)
 
     raise FileNotFoundError(
-        f"Asset file not found: {path_or_filename}. "
-        "If this path is in Hugging Face repo, set hf_asset_repo_id."
+        f"Asset file not found: {path_or_filename}. " "If this path is in Hugging Face repo, set hf_asset_repo_id."
     )
+
 
 @dataclass
 class LoadedModel:
@@ -223,12 +227,13 @@ class ModelLoader:
 
     @staticmethod
     def load_base_memory_model(base_model_key: str, base_model_path: str) -> LoadedModel:
-
         start_time = time.perf_counter()
 
         pipe = StableDiffusionPipeline.from_pretrained(
             base_model_path,
             torch_dtype=torch.float16,
+            safety_checker=None,
+            requires_safety_checker=False,
         ).to("cuda")
 
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(
@@ -252,13 +257,9 @@ class ModelLoader:
 
     @staticmethod
     def load_dobby_memory_model(base_model_key: str, base_model_path: str, quant_path: str) -> LoadedModel:
-
         start_time = time.perf_counter()
 
-        pipe = MixDQ_SD15_Pipeline_W8A8.from_pretrained(
-            base_model_path,
-            torch_dtype=torch.float16,
-        ).to("cuda")
+        pipe = MixDQ_SD15_Pipeline_W8A8.from_pretrained(base_model_path, torch_dtype=torch.float16).to("cuda")
 
         pipe.unet = UNet2DConditionModel.from_pretrained(
             quant_path,
@@ -351,7 +352,6 @@ class ModelLoader:
             feature_extractor=None,
             requires_safety_checker=False,
         ).to("cuda")
-
 
         pipe.enable_attention_slicing()
         pipe.vae.enable_slicing()
