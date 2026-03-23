@@ -1,8 +1,9 @@
 """Main execution script for SDXL and SD1.5 benchmarks."""
 
 import argparse
+import dataclasses
+import multiprocessing as mp
 from pathlib import Path
-from typing import Callable
 
 import pandas as pd
 import torch
@@ -20,7 +21,95 @@ from .config import (
     SD15_QUANT_CKPT_PATHS,
     TEACHER_STEPS,
 )
-from .models import LoadedModel, ModelLoader
+from .models import ModelLoader
+
+
+@dataclasses.dataclass
+class _SD15InferRequest:
+    """Parameters passed to the subprocess worker for a single SD1.5 inference."""
+
+    model_load_type: str  # "base_memory" | "dobby_memory_quant" | "dobby_memory_gguf"
+    base_model_key: str
+    base_model_path: str
+    prompt: str
+    num_steps: int
+    prompt_idx: int
+    output_dir: str
+    quant_path: str | None = None
+    gguf_unet_path: str | None = None
+    unet_config_dir: str | None = None
+    hf_asset_repo_id: str | None = None
+
+
+def _subprocess_infer_sd15_worker(
+    req: _SD15InferRequest,
+    result_queue: "mp.Queue",
+) -> None:
+    """Worker that runs in a spawned subprocess for isolated RAM measurement.
+
+    각 subprocess는 새로운 OS 주소 공간에서 시작하므로 RSS 측정값이
+    이전 반복의 Python heap 잔류물이나 CUDA 런타임 초기화 비용에
+    오염되지 않는다. baseline은 subprocess 시작 직후의 RSS로 고정된다.
+    """
+    import gc as _gc
+    import threading as _threading
+
+    import psutil as _psutil
+
+    from .benchmark import BenchmarkRunner
+    from .models import ModelLoader
+
+    process = _psutil.Process()
+    baseline_ram_mb = process.memory_info().rss / (1024 * 1024)
+
+    ram_samples: list[float] = []
+    stop_event = _threading.Event()
+
+    def _sample_loop() -> None:
+        p = _psutil.Process()
+        while not stop_event.is_set():
+            ram_samples.append(p.memory_info().rss / (1024 * 1024))
+            stop_event.wait(timeout=0.1)
+
+    monitor = _threading.Thread(target=_sample_loop, daemon=True)
+    monitor.start()
+
+    try:
+        if req.model_load_type == "base_memory":
+            loaded_model = ModelLoader.load_base_memory_model(req.base_model_key, req.base_model_path)
+        elif req.model_load_type == "dobby_memory_quant":
+            loaded_model = ModelLoader.load_dobby_memory_model(req.base_model_key, req.base_model_path, req.quant_path)
+        else:  # dobby_memory_gguf
+            loaded_model = ModelLoader.load_dobby_ram_gguf_model(
+                req.base_model_key,
+                req.base_model_path,
+                req.gguf_unet_path,
+                req.unet_config_dir,
+                req.hf_asset_repo_id,
+            )
+
+        runner = BenchmarkRunner(output_dir=req.output_dir)
+        result = runner.run_inference(
+            loaded_model=loaded_model,
+            prompt=req.prompt,
+            num_inference_steps=req.num_steps,
+            prompt_idx=req.prompt_idx,
+        )
+
+        stop_event.set()
+        monitor.join()
+
+        result.peak_ram_mb = max(0.0, max(ram_samples) - baseline_ram_mb)
+
+        ModelLoader.unload_model(loaded_model)
+        _gc.collect()
+        result_queue.put(result)
+    except Exception:
+        stop_event.set()
+        monitor.join()
+        result_queue.put(None)
+        raise
+
 
 OUTPUT_DIR = "results/"
 BENCHMARK_SUMMARY_SPEED_CSV = "benchmark_summary_speed.csv"
@@ -48,7 +137,7 @@ def _print_section_header(title: str) -> None:
 def _run_sdxl_model_benchmark(
     runner: BenchmarkRunner,
     model_display_name: str,
-    load_fn: Callable[[], LoadedModel],
+    load_fn,
     num_steps: int,
 ) -> None:
     """Iterate over all prompts for one SDXL model variant, reporting inference time."""
@@ -65,7 +154,7 @@ def _run_sdxl_model_benchmark(
             num_inference_steps=num_steps,
             prompt_idx=idx,
         )
-        print(f"    ✓ Generation completed (inference time: {result.inference_time:.2f}s ")
+        print(f"    ✓ Generation completed (inference time: {result.inference_time:.2f}s)")
 
         runner.save_result(result)
         print("    ✓ Result saved")
@@ -76,29 +165,41 @@ def _run_sdxl_model_benchmark(
 def _run_sd15_model_benchmark(
     runner: BenchmarkRunner,
     model_display_name: str,
-    load_fn: Callable[[], LoadedModel],
-    num_steps: int,
+    req_template: _SD15InferRequest,
 ) -> None:
-    """Iterate over all prompts for one SD1.5 model variant, reporting memory usage."""
+    """Spawn one subprocess per prompt for fully isolated RAM measurement.
+
+    subprocess(spawn)는 새로운 OS 주소 공간으로 시작하므로 Python heap 잔류물,
+    CUDA 런타임 초기화 비용 등이 baseline_ram_mb에 포함되지 않는다.
+    이를 통해 반복 간 측정값의 분산을 최소화할 수 있다.
+    """
+    ctx = mp.get_context("spawn")
     for idx, prompt in enumerate(PROMPTS, start=1):
         print(f"  [{idx}/{len(PROMPTS)}] Prompt: {prompt[:50]}...")
         print(f"    Loading model: {model_display_name}")
 
-        loaded_model = load_fn()
-        print(f"    ✓ Model loaded (model memory: {loaded_model.model_memory_mb:.2f}MB)")
+        req = dataclasses.replace(req_template, prompt=prompt, prompt_idx=idx)
+        result_queue: mp.Queue = ctx.Queue()
+        proc = ctx.Process(target=_subprocess_infer_sd15_worker, args=(req, result_queue))
+        proc.start()
 
-        result = runner.run_inference(
-            loaded_model=loaded_model,
-            prompt=prompt,
-            num_inference_steps=num_steps,
-            prompt_idx=idx,
-        )
-        print(f"    ✓ Generation completed (GPU: {result.peak_memory_mb:.0f}MB " f"| RAM: {result.peak_ram_mb:.0f}MB ")
+        try:
+            result = result_queue.get(timeout=900)  # 15분 타임아웃
+        except Exception:
+            proc.kill()
+            raise RuntimeError(f"Subprocess timed out for prompt {idx}: {prompt[:50]}")
 
+        proc.join()
+
+        if result is None or proc.exitcode != 0:
+            raise RuntimeError(f"Subprocess inference failed (exitcode={proc.exitcode}) for prompt {idx}")
+
+        print("    ✓ Model loaded")
+        print(f"    ✓ Generation completed (GPU: {result.peak_memory_mb:.0f}MB | RAM: {result.peak_ram_mb:.0f}MB")
+
+        runner.results.append(result)
         runner.save_result(result)
         print("    ✓ Result saved")
-
-        ModelLoader.unload_model(loaded_model)
 
 
 def _run_sdxl_benchmarks(runner: BenchmarkRunner) -> None:
@@ -111,9 +212,9 @@ def _run_sdxl_benchmarks(runner: BenchmarkRunner) -> None:
         _run_sdxl_model_benchmark(
             runner=runner,
             model_display_name=f"{base_model_key}_base",
-            load_fn=lambda: ModelLoader.load_teacher_model(
-                base_model_key=base_model_key,
-                base_model_path=base_model_path,
+            load_fn=lambda key=base_model_key, path=base_model_path: ModelLoader.load_teacher_model(
+                base_model_key=key,
+                base_model_path=path,
             ),
             num_steps=TEACHER_STEPS,
         )
@@ -123,10 +224,10 @@ def _run_sdxl_benchmarks(runner: BenchmarkRunner) -> None:
         _run_sdxl_model_benchmark(
             runner=runner,
             model_display_name=f"{base_model_key}_dobby",
-            load_fn=lambda: ModelLoader.load_lcm_model(
-                base_model_key=base_model_key,
-                lcm_checkpoint_path=lcm_checkpoint,
-                base_model_path=base_model_path,
+            load_fn=lambda key=base_model_key, path=base_model_path, ckpt=lcm_checkpoint: ModelLoader.load_lcm_model(
+                base_model_key=key,
+                lcm_checkpoint_path=ckpt,
+                base_model_path=path,
             ),
             num_steps=LCM_STEPS,
         )
@@ -141,6 +242,22 @@ def _run_sd15_benchmarks(
     for base_model_key, base_model_path in SD15_MODELS.items():
         _print_section_header(f"{experiment_label} Experiment Model: {base_model_key} ({base_model_path})")
 
+        print("[2/2] Base Memory Model Benchmark Started...")
+        _run_sd15_model_benchmark(
+            runner=runner,
+            model_display_name=f"{base_model_key}_base",
+            req_template=_SD15InferRequest(
+                model_load_type="base_memory",
+                base_model_key=base_model_key,
+                base_model_path=base_model_path,
+                prompt="",
+                num_steps=TEACHER_STEPS,
+                prompt_idx=0,
+                output_dir=str(runner.output_dir),
+            ),
+        )
+        print("✓ Base Memory Model Benchmark Completed\n")
+
         print("[1/2] Dobby Memory Model Benchmark Started...")
         if use_gguf_for_dobby:
             gguf_unet_path = SD15_GGUF_UNET_PATHS.get(base_model_key)
@@ -152,41 +269,37 @@ def _run_sd15_benchmarks(
                     f"Missing GGUF RAM benchmark paths for '{base_model_key}'. "
                     "Set SD15_GGUF_UNET_PATHS and SD15_GGUF_UNET_CONFIG_DIRS in settings.py."
                 )
-            load_fn = lambda: ModelLoader.load_dobby_ram_gguf_model(
+            req_template = _SD15InferRequest(
+                model_load_type="dobby_memory_gguf",
                 base_model_key=base_model_key,
                 base_model_path=base_model_path,
+                prompt="",
+                num_steps=TEACHER_STEPS,
+                prompt_idx=0,
+                output_dir=str(runner.output_dir),
                 gguf_unet_path=gguf_unet_path,
                 unet_config_dir=unet_config_dir,
                 hf_asset_repo_id=hf_asset_repo_id,
             )
         else:
             quant_path = SD15_QUANT_CKPT_PATHS.get(base_model_key)
-
-            load_fn = lambda: ModelLoader.load_dobby_memory_model(
+            req_template = _SD15InferRequest(
+                model_load_type="dobby_memory_quant",
                 base_model_key=base_model_key,
                 base_model_path=base_model_path,
+                prompt="",
+                num_steps=TEACHER_STEPS,
+                prompt_idx=0,
+                output_dir=str(runner.output_dir),
                 quant_path=quant_path,
             )
 
         _run_sd15_model_benchmark(
             runner=runner,
             model_display_name=f"{base_model_key}_quantized",
-            load_fn=load_fn,
-            num_steps=TEACHER_STEPS,
+            req_template=req_template,
         )
         print("✓ Dobby Memory Model Benchmark Completed\n")
-
-        print("[2/2] Base Memory Model Benchmark Started...")
-        _run_sd15_model_benchmark(
-            runner=runner,
-            model_display_name=f"{base_model_key}_base",
-            load_fn=lambda: ModelLoader.load_base_memory_model(
-                base_model_key=base_model_key,
-                base_model_path=base_model_path,
-            ),
-            num_steps=TEACHER_STEPS,
-        )
-        print("✓ Base Memory Model Benchmark Completed\n")
 
 
 def _parse_args() -> argparse.Namespace:

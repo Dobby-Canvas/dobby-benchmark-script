@@ -224,6 +224,7 @@ class ModelLoader:
         """
         del loaded_model.pipe
         torch.cuda.empty_cache()
+        gc.collect()
 
     @staticmethod
     def load_base_memory_model(base_model_key: str, base_model_path: str) -> LoadedModel:

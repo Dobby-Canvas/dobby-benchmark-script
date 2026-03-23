@@ -164,7 +164,6 @@ class BenchmarkRunner:
         stop_event.set()
         monitor_thread.join()
 
-        peak_ram_mb = max(ram_samples) if ram_samples else None
         peak_gpu_mb = max(gpu_samples) if gpu_samples else None
 
         if inference_time < 0:
@@ -187,7 +186,6 @@ class BenchmarkRunner:
             model_load_time=loaded_model.load_time,
             inference_time=inference_time,
             peak_memory_mb=peak_gpu_mb,
-            peak_ram_mb=peak_ram_mb,
         )
 
         self.results.append(result)
