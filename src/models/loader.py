@@ -284,6 +284,9 @@ class ModelLoader:
             bos=False,
         )
 
+        pipe.safety_checker = None  # Disable safety checker for memory benchmark
+        pipe.requires_safety_checker = False  # Disable feature extractor for memory benchmark
+
         if torch.cuda.is_available():
             torch.cuda.synchronize()
         load_time = time.perf_counter() - start_time
