@@ -371,7 +371,7 @@ class ModelLoader:
         return LoadedModel(
             pipe=pipe,
             model_name=f"{base_model_key}_quantized",
-            model_type="dobby_memory",
+            model_type="dobby_memory_gguf",
             base_model_key=base_model_key,
             load_time=load_time,
             model_memory_mb=model_memory_mb,

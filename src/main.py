@@ -242,7 +242,7 @@ def _run_sd15_benchmarks(
     for base_model_key, base_model_path in SD15_MODELS.items():
         _print_section_header(f"{experiment_label} Experiment Model: {base_model_key} ({base_model_path})")
 
-        print("[2/2] Base Memory Model Benchmark Started...")
+        print("[1/2] Base Memory Model Benchmark Started...")
         _run_sd15_model_benchmark(
             runner=runner,
             model_display_name=f"{base_model_key}_base",
@@ -258,7 +258,7 @@ def _run_sd15_benchmarks(
         )
         print("✓ Base Memory Model Benchmark Completed\n")
 
-        print("[1/2] Dobby Memory Model Benchmark Started...")
+        print("[2/2] Dobby Memory Model Benchmark Started...")
         if use_gguf_for_dobby:
             gguf_unet_path = SD15_GGUF_UNET_PATHS.get(base_model_key)
             unet_config_dir = SD15_GGUF_UNET_CONFIG_DIRS.get(base_model_key)
@@ -343,7 +343,7 @@ def _save_improvement_report(
         output_dir: Output directory
         experiment: "all" | "speed" | "gpu" | "ram" - selected experiment scope
     """
-    sd15_mask = df["model_type"].isin(["base_memory", "dobby_memory"])
+    sd15_mask = df["model_type"].isin(["base_memory", "dobby_memory", "dobby_memory_gguf"])
     sdxl_df = df[~sd15_mask]
     sd15_df = df[sd15_mask]
 
@@ -395,20 +395,17 @@ def _save_improvement_report(
 
         for base_key in sd15_df["base_model_key"].unique():
             base_mem = sd15_df[(sd15_df["base_model_key"] == base_key) & (sd15_df["model_type"] == "base_memory")]
-            dobby_mem = sd15_df[(sd15_df["base_model_key"] == base_key) & (sd15_df["model_type"] == "dobby_memory")]
+            # GPU 실험은 quantized 모델(dobby_memory), RAM 실험은 GGUF 모델(dobby_memory_gguf)
+            dobby_mem_gpu = sd15_df[(sd15_df["base_model_key"] == base_key) & (sd15_df["model_type"] == "dobby_memory")]
+            dobby_mem_ram = sd15_df[
+                (sd15_df["base_model_key"] == base_key) & (sd15_df["model_type"] == "dobby_memory_gguf")
+            ]
 
-            if base_mem.empty or dobby_mem.empty:
-                continue
+            if output_gpu and not dobby_mem_gpu.empty:
+                v_base = base_mem["peak_memory_mb"].mean()
+                v_dobby = dobby_mem_gpu["peak_memory_mb"].mean()
+                gpu_reduction_pct = (v_base - v_dobby) / v_base * 100 if v_base > 0 else 0.0
 
-            v_base = base_mem["peak_memory_mb"].mean()
-            v_dobby = dobby_mem["peak_memory_mb"].mean()
-            gpu_reduction_pct = (v_base - v_dobby) / v_base * 100 if v_base > 0 else 0.0
-
-            m_base = base_mem["peak_ram_mb"].mean()
-            m_dobby = dobby_mem["peak_ram_mb"].mean()
-            ram_reduction_pct = (m_base - m_dobby) / m_base * 100 if m_base > 0 else 0.0
-
-            if output_gpu:
                 gpu_lines.append("")
                 gpu_lines.append(f"[{base_key}]")
                 gpu_lines.append(f"  Base 평균 피크 VRAM:  {v_base:.2f} MB")
@@ -416,7 +413,11 @@ def _save_improvement_report(
                 gpu_lines.append(f"  VRAM 절감율: {gpu_reduction_pct:.2f}%")
                 gpu_lines.append("")
 
-            if output_ram:
+            if output_ram and not dobby_mem_ram.empty:
+                m_base = base_mem["peak_ram_mb"].mean()
+                m_dobby = dobby_mem_ram["peak_ram_mb"].mean()
+                ram_reduction_pct = (m_base - m_dobby) / m_base * 100 if m_base > 0 else 0.0
+
                 ram_lines.append("")
                 ram_lines.append(f"[{base_key}]")
                 ram_lines.append(f"  Base 평균 피크 RAM:  {m_base:.2f} MB")
@@ -451,7 +452,7 @@ def _print_summary(
     """
     _print_section_header("Benchmark Summary")
 
-    sd15_mask = df["model_type"].isin(["base_memory", "dobby_memory"])
+    sd15_mask = df["model_type"].isin(["base_memory", "dobby_memory", "dobby_memory_gguf"])
     sdxl_df = df[~sd15_mask]
     sd15_df = df[sd15_mask]
 
@@ -483,7 +484,9 @@ def _print_summary(
 
     if not sd15_df.empty and (output_gpu or output_ram):
         if output_gpu:
-            gpu_summary = sd15_df.groupby(["base_model_key", "model_type"]).agg(
+            # GPU 실험: quantized 모델(dobby_memory)만 포함
+            gpu_sd15_df = sd15_df[sd15_df["model_type"].isin(["base_memory", "dobby_memory"])]
+            gpu_summary = gpu_sd15_df.groupby(["base_model_key", "model_type"]).agg(
                 {"peak_memory_mb": ["mean", "min", "max"]}
             )
             print("\n[GPU Memory Experiment] GPU VRAM statistics:")
@@ -503,7 +506,14 @@ def _print_summary(
             print(f"  → Saved: {gpu_path}")
 
         if output_ram:
-            ram_summary = sd15_df.groupby(["base_model_key", "model_type"]).agg({"peak_ram_mb": ["mean", "min", "max"]})
+            # RAM 실험: GGUF 모델(dobby_memory_gguf) 우선, 없으면 quant 폴백
+            ram_dobby_type = (
+                "dobby_memory_gguf" if (sd15_df["model_type"] == "dobby_memory_gguf").any() else "dobby_memory"
+            )
+            ram_sd15_df = sd15_df[sd15_df["model_type"].isin(["base_memory", ram_dobby_type])]
+            ram_summary = ram_sd15_df.groupby(["base_model_key", "model_type"]).agg(
+                {"peak_ram_mb": ["mean", "min", "max"]}
+            )
             print("\n[RAM (시스템 메모리) Experiment] 프로세스 RAM 사용량 통계:")
             print(ram_summary.to_string())
 
