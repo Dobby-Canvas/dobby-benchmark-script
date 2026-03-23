@@ -538,13 +538,14 @@ def main(args: argparse.Namespace | None = None) -> None:
     if experiment == "all":
         speed_runner = BenchmarkRunner(output_dir=f"{OUTPUT_DIR}speed/")
         gpu_runner = BenchmarkRunner(output_dir=f"{OUTPUT_DIR}gpu/")
+        ram_runner = BenchmarkRunner(output_dir=f"{OUTPUT_DIR}ram/")  # ← 추가
 
         _run_sdxl_benchmarks(speed_runner)
-        _run_sd15_benchmarks(gpu_runner, experiment_label="Memory", use_gguf_for_dobby=False)
+        _run_sd15_benchmarks(gpu_runner, experiment_label="GPU Memory", use_gguf_for_dobby=False)
+        _run_sd15_benchmarks(ram_runner, experiment_label="RAM", use_gguf_for_dobby=True)  # ← 추가
 
-        # 요약용 통합 runner (결과 디렉토리 루트에 benchmark_results.csv 저장)
         combined_runner = BenchmarkRunner(output_dir=OUTPUT_DIR)
-        combined_runner.results = speed_runner.results + gpu_runner.results
+        combined_runner.results = speed_runner.results + gpu_runner.results + ram_runner.results  # ← ram 추가
         df = combined_runner.save_results()
     else:
         subdir = f"{OUTPUT_DIR}{experiment}/"
