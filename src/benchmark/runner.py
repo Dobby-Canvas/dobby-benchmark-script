@@ -54,15 +54,17 @@ def _monitor_system_resources(
     stop_event: threading.Event,
     cpu_samples: list,
     ram_samples: list,
+    gpu_samples: list,
     interval: float = 0.1,
 ) -> None:
     """
-    Thread function to periodically sample CPU and RAM usage during inference.
+    Thread function to periodically sample CPU, RAM, and GPU usage during inference.
 
     Args:
         stop_event: Event to signal monitoring thread to stop
         cpu_samples: List to append CPU percent samples to
         ram_samples: List to append RAM usage (MB) samples to
+        gpu_samples: List to append GPU memory allocated (MB) samples to
         interval: Sampling interval in seconds
     """
     process = psutil.Process()
@@ -70,6 +72,8 @@ def _monitor_system_resources(
     while not stop_event.is_set():
         cpu_samples.append(psutil.cpu_percent(interval=None))
         ram_samples.append(process.memory_info().rss / (1024 * 1024))
+        if torch.cuda.is_available():
+            gpu_samples.append(torch.cuda.memory_allocated() / (1024 * 1024))
         stop_event.wait(timeout=interval)
 
 
@@ -134,10 +138,11 @@ class BenchmarkRunner:
 
         cpu_samples: list[float] = []
         ram_samples: list[float] = []
+        gpu_samples: list[float] = []
         stop_event = threading.Event()
         monitor_thread = threading.Thread(
             target=_monitor_system_resources,
-            args=(stop_event, cpu_samples, ram_samples),
+            args=(stop_event, cpu_samples, ram_samples, gpu_samples),
             daemon=True,
         )
         monitor_thread.start()
@@ -159,8 +164,8 @@ class BenchmarkRunner:
         stop_event.set()
         monitor_thread.join()
 
-        peak_memory_mb = torch.cuda.max_memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else None
         peak_ram_mb = max(ram_samples) if ram_samples else None
+        peak_gpu_mb = max(gpu_samples) if gpu_samples else None
 
         if inference_time < 0:
             print(f"WARNING: Negative inference time detected: {inference_time}")
@@ -181,7 +186,7 @@ class BenchmarkRunner:
             image_path=str(image_path),
             model_load_time=loaded_model.load_time,
             inference_time=inference_time,
-            peak_memory_mb=peak_memory_mb,
+            peak_memory_mb=peak_gpu_mb,
             peak_ram_mb=peak_ram_mb,
         )
 
