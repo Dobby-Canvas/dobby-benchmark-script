@@ -141,18 +141,7 @@ def _run_sd15_benchmarks(
     for base_model_key, base_model_path in SD15_MODELS.items():
         _print_section_header(f"{experiment_label} Experiment Model: {base_model_key} ({base_model_path})")
 
-        print("[1/2] Base Memory Model Benchmark Started...")
-        _run_sd15_model_benchmark(
-            runner=runner,
-            model_display_name=f"{base_model_key}_base",
-            load_fn=lambda: ModelLoader.load_base_memory_model(
-                base_model_key=base_model_key,
-                base_model_path=base_model_path,
-            ),
-            num_steps=TEACHER_STEPS,
-        )
-        print("✓ Base Memory Model Benchmark Completed\n")
-        print("[2/2] Dobby Memory Model Benchmark Started...")
+        print("[1/2] Dobby Memory Model Benchmark Started...")
         if use_gguf_for_dobby:
             gguf_unet_path = SD15_GGUF_UNET_PATHS.get(base_model_key)
             unet_config_dir = SD15_GGUF_UNET_CONFIG_DIRS.get(base_model_key)
@@ -186,6 +175,18 @@ def _run_sd15_benchmarks(
             num_steps=TEACHER_STEPS,
         )
         print("✓ Dobby Memory Model Benchmark Completed\n")
+
+        print("[2/2] Base Memory Model Benchmark Started...")
+        _run_sd15_model_benchmark(
+            runner=runner,
+            model_display_name=f"{base_model_key}_base",
+            load_fn=lambda: ModelLoader.load_base_memory_model(
+                base_model_key=base_model_key,
+                base_model_path=base_model_path,
+            ),
+            num_steps=TEACHER_STEPS,
+        )
+        print("✓ Base Memory Model Benchmark Completed\n")
 
 
 def _parse_args() -> argparse.Namespace:

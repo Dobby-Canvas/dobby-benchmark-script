@@ -1,5 +1,6 @@
 """Benchmark runner with inference timing."""
 
+import gc
 import threading
 import time
 from dataclasses import dataclass
@@ -128,6 +129,9 @@ class BenchmarkRunner:
             torch.cuda.synchronize()
             torch.cuda.reset_peak_memory_stats()
 
+        # 모델 로드 잔류 객체 정리 후 측정 시작
+        gc.collect()
+
         cpu_samples: list[float] = []
         ram_samples: list[float] = []
         stop_event = threading.Event()
@@ -139,13 +143,14 @@ class BenchmarkRunner:
         monitor_thread.start()
 
         start_time = time.perf_counter()
-        image = loaded_model.pipe(
-            prompt=full_prompt,
-            negative_prompt="lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-            num_inference_steps=num_inference_steps,
-            generator=generator,
-            guidance_scale=guidance_scale,
-        ).images[0]
+        with torch.inference_mode():
+            image = loaded_model.pipe(
+                prompt=full_prompt,
+                negative_prompt="lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+                num_inference_steps=num_inference_steps,
+                generator=generator,
+                guidance_scale=guidance_scale,
+            ).images[0]
 
         if torch.cuda.is_available():
             torch.cuda.synchronize()
