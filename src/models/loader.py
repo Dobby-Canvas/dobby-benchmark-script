@@ -334,11 +334,13 @@ class ModelLoader:
             base_model_path,
             subfolder="text_encoder",
             torch_dtype=dtype,
+            low_cpu_mem_usage=True,
         )
         vae = AutoencoderKL.from_pretrained(
             base_model_path,
             subfolder="vae",
             torch_dtype=dtype,
+            low_cpu_mem_usage=True,
         )
         scheduler = DDIMScheduler.from_pretrained(base_model_path, subfolder="scheduler")
 
