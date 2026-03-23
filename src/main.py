@@ -8,12 +8,19 @@ import pandas as pd
 import torch
 
 from .benchmark import BenchmarkRunner
-from .config import (BASE_MODELS, LCM_CHECKPOINT_PATHS, LCM_STEPS, PROMPTS,
-                     SD15_GGUF_ASSET_REPOS, SD15_GGUF_UNET_CONFIG_DIRS,
-                     SD15_GGUF_UNET_PATHS, SD15_MODELS, SD15_QUANT_CKPT_PATHS,
-                     TEACHER_STEPS)
+from .config import (
+    BASE_MODELS,
+    LCM_CHECKPOINT_PATHS,
+    LCM_STEPS,
+    PROMPTS,
+    SD15_GGUF_ASSET_REPOS,
+    SD15_GGUF_UNET_CONFIG_DIRS,
+    SD15_GGUF_UNET_PATHS,
+    SD15_MODELS,
+    SD15_QUANT_CKPT_PATHS,
+    TEACHER_STEPS,
+)
 from .models import LoadedModel, ModelLoader
-from .visualization import ResultPlotter
 
 OUTPUT_DIR = "results/"
 BENCHMARK_SUMMARY_SPEED_CSV = "benchmark_summary_speed.csv"
@@ -58,9 +65,7 @@ def _run_sdxl_model_benchmark(
             num_inference_steps=num_steps,
             prompt_idx=idx,
         )
-        print(
-            f"    ✓ Generation completed (inference time: {result.inference_time:.2f}s "
-        )
+        print(f"    ✓ Generation completed (inference time: {result.inference_time:.2f}s ")
 
         runner.save_result(result)
         print("    ✓ Result saved")
@@ -88,10 +93,7 @@ def _run_sd15_model_benchmark(
             num_inference_steps=num_steps,
             prompt_idx=idx,
         )
-        print(
-            f"    ✓ Generation completed (GPU: {result.peak_memory_mb:.0f}MB "
-            f"| RAM: {result.peak_ram_mb:.0f}MB "
-        )
+        print(f"    ✓ Generation completed (GPU: {result.peak_memory_mb:.0f}MB " f"| RAM: {result.peak_ram_mb:.0f}MB ")
 
         runner.save_result(result)
         print("    ✓ Result saved")
@@ -344,14 +346,23 @@ def _print_summary(
     output_ram = experiment in ("all", "ram")
 
     if output_speed and not sdxl_df.empty:
-        sdxl_summary = sdxl_df.groupby(["base_model_key", "model_type"]).agg({
-            "inference_time": ["mean", "std", "min", "max"],
-        })
+        sdxl_summary = sdxl_df.groupby(["base_model_key", "model_type"]).agg(
+            {
+                "inference_time": ["mean", "std", "min", "max"],
+            }
+        )
         print("[Speed Experiment] Model inference time statistics:")
         print(sdxl_summary.to_string())
 
         speed_df = sdxl_summary.reset_index()
-        speed_df.columns = ["base_model_key", "model_type", "inference_time_mean", "inference_time_std", "inference_time_min", "inference_time_max"]
+        speed_df.columns = [
+            "base_model_key",
+            "model_type",
+            "inference_time_mean",
+            "inference_time_std",
+            "inference_time_min",
+            "inference_time_max",
+        ]
         speed_path = output_dir / BENCHMARK_SUMMARY_SPEED_CSV
         speed_df.to_csv(speed_path, index=False)
         print(f"  → Saved: {speed_path}")
@@ -366,15 +377,19 @@ def _print_summary(
             print(gpu_summary.to_string())
 
             gpu_df = gpu_summary.reset_index()
-            gpu_df.columns = ["base_model_key", "model_type", "peak_memory_mb_mean", "peak_memory_mb_min", "peak_memory_mb_max"]
+            gpu_df.columns = [
+                "base_model_key",
+                "model_type",
+                "peak_memory_mb_mean",
+                "peak_memory_mb_min",
+                "peak_memory_mb_max",
+            ]
             gpu_path = output_dir / BENCHMARK_SUMMARY_GPU_CSV
             gpu_df.to_csv(gpu_path, index=False)
             print(f"  → Saved: {gpu_path}")
 
         if output_ram:
-            ram_summary = sd15_df.groupby(["base_model_key", "model_type"]).agg(
-                {"peak_ram_mb": ["mean", "min", "max"]}
-            )
+            ram_summary = sd15_df.groupby(["base_model_key", "model_type"]).agg({"peak_ram_mb": ["mean", "min", "max"]})
             print("\n[RAM (시스템 메모리) Experiment] 프로세스 RAM 사용량 통계:")
             print(ram_summary.to_string())
 
@@ -389,33 +404,6 @@ def _print_summary(
     print(counts.to_string())
 
     _save_improvement_report(df, output_dir, experiment)
-
-
-def _cleanup_unrequested_outputs(output_dir: Path, experiment: str) -> None:
-    """Remove stale output files so only files for the current experiment remain."""
-    all_output_files = {
-        BENCHMARK_SUMMARY_SPEED_CSV,
-        BENCHMARK_SUMMARY_GPU_CSV,
-        BENCHMARK_SUMMARY_RAM_CSV,
-        BENCHMARK_IMPROVEMENT_REPORT_SPEED_TXT,
-        BENCHMARK_IMPROVEMENT_REPORT_GPU_TXT,
-        BENCHMARK_IMPROVEMENT_REPORT_RAM_TXT,
-    }
-    required_output_files_by_experiment = {
-        "all": all_output_files,
-        "speed": {BENCHMARK_SUMMARY_SPEED_CSV, BENCHMARK_IMPROVEMENT_REPORT_SPEED_TXT},
-        "gpu": {BENCHMARK_SUMMARY_GPU_CSV, BENCHMARK_IMPROVEMENT_REPORT_GPU_TXT},
-        "ram": {BENCHMARK_SUMMARY_RAM_CSV, BENCHMARK_IMPROVEMENT_REPORT_RAM_TXT},
-    }
-
-    required_files = required_output_files_by_experiment[experiment]
-    removable_files = all_output_files - required_files
-
-    for filename in removable_files:
-        stale_file_path = output_dir / filename
-        if stale_file_path.exists():
-            stale_file_path.unlink()
-            print(f"  → Removed stale output: {stale_file_path}")
 
 
 def main(args: argparse.Namespace | None = None) -> None:
@@ -448,7 +436,6 @@ def main(args: argparse.Namespace | None = None) -> None:
     _print_section_header("Result Saving & Visualization Creation")
     df = runner.save_results()
     output_dir_path = Path(OUTPUT_DIR)
-    _cleanup_unrequested_outputs(output_dir_path, experiment)
     _print_summary(df, output_dir_path, experiment)
 
     print(f"\n{'=' * SECTION_WIDTH}")
@@ -459,6 +446,7 @@ def main(args: argparse.Namespace | None = None) -> None:
 def _suppress_library_warnings() -> None:
     import diffusers
     from transformers import logging as transformers_logging
+
     transformers_logging.set_verbosity_error()
     diffusers.logging.set_verbosity_error()
 
