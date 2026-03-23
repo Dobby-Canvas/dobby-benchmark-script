@@ -422,20 +422,34 @@ def main(args: argparse.Namespace | None = None) -> None:
     else:
         _print_section_header("Benchmark - RAM Experiment")
 
-    runner = BenchmarkRunner(output_dir=OUTPUT_DIR)
+    if experiment == "all":
+        speed_runner = BenchmarkRunner(output_dir=f"{OUTPUT_DIR}speed/")
+        gpu_runner = BenchmarkRunner(output_dir=f"{OUTPUT_DIR}gpu/")
 
-    if experiment in ("all", "speed"):
-        _run_sdxl_benchmarks(runner)
-    if experiment in ("all", "gpu", "ram"):
-        label = "GPU VRAM" if experiment == "gpu" else "RAM" if experiment == "ram" else "Memory"
-        _run_sd15_benchmarks(
-            runner,
-            experiment_label=label,
-            use_gguf_for_dobby=(experiment == "ram"),
-        )
+        _run_sdxl_benchmarks(speed_runner)
+        _run_sd15_benchmarks(gpu_runner, experiment_label="Memory", use_gguf_for_dobby=False)
+
+        # 요약용 통합 runner (결과 디렉토리 루트에 benchmark_results.csv 저장)
+        combined_runner = BenchmarkRunner(output_dir=OUTPUT_DIR)
+        combined_runner.results = speed_runner.results + gpu_runner.results
+        df = combined_runner.save_results()
+    else:
+        subdir = f"{OUTPUT_DIR}{experiment}/"
+        runner = BenchmarkRunner(output_dir=subdir)
+
+        if experiment == "speed":
+            _run_sdxl_benchmarks(runner)
+        else:
+            label = "GPU VRAM" if experiment == "gpu" else "RAM"
+            _run_sd15_benchmarks(
+                runner,
+                experiment_label=label,
+                use_gguf_for_dobby=(experiment == "ram"),
+            )
+
+        df = runner.save_results()
 
     _print_section_header("Result Saving & Visualization Creation")
-    df = runner.save_results()
     output_dir_path = Path(OUTPUT_DIR)
     _print_summary(df, output_dir_path, experiment)
 
